@@ -112,6 +112,60 @@ int main(void)
                   "outer must not verify under a different key");
     }
 
+    /* --- dual-ECU manifest: the Berry script secondary (spec §2/§3) --- */
+    {
+        akt_secondary_t sec;
+        memset(&sec, 0, sizeof(sec));
+        sec.ecu_serial = "aktualino-lua-01";
+        sec.attacks_detected = "";
+        strcpy(sec.installed.filepath, "aktualino-lua/1.4.0/blink.be");
+        sec.installed.length = 320;
+        sec.installed.version = 3;
+        for (int i = 0; i < 32; i++) sec.installed.sha256[i] = (uint8_t)(i * 3 + 9);
+
+        size_t len2 = 0;
+        char *json2 = akt_build_manifest_ex("aktualino-esp32-01", &installed, "",
+                                            NULL, true, &sec, pk, sk, &len2);
+        CHECK(json2 != NULL);
+        cJSON *outer2 = cJSON_Parse(json2);
+        CHECK(outer2 != NULL);
+        CHECK_MSG(verify_envelope(outer2, pk, "dual-outer") == true, "dual outer sig");
+
+        cJSON *osigned2 = cJSON_GetObjectItemCaseSensitive(outer2, "signed");
+        cJSON *evm2 = cJSON_GetObjectItemCaseSensitive(osigned2, "ecu_version_manifests");
+        CHECK(cJSON_IsObject(evm2));
+
+        /* both ECUs present; each nested manifest verifies under the SAME key */
+        cJSON *m_prim = cJSON_GetObjectItemCaseSensitive(evm2, "aktualino-esp32-01");
+        cJSON *m_sec  = cJSON_GetObjectItemCaseSensitive(evm2, "aktualino-lua-01");
+        CHECK_MSG(cJSON_IsObject(m_prim), "primary ecu manifest present");
+        CHECK_MSG(cJSON_IsObject(m_sec),  "secondary ecu manifest present");
+        CHECK_MSG(verify_envelope(m_prim, pk, "dual-inner-primary") == true,
+                  "primary inner sig");
+        CHECK_MSG(verify_envelope(m_sec, pk, "dual-inner-secondary") == true,
+                  "secondary inner sig (key reuse)");
+
+        /* secondary installed_image shape */
+        cJSON *s_signed = cJSON_GetObjectItemCaseSensitive(m_sec, "signed");
+        cJSON *s_es = cJSON_GetObjectItemCaseSensitive(s_signed, "ecu_serial");
+        CHECK(cJSON_IsString(s_es) && strcmp(s_es->valuestring, "aktualino-lua-01") == 0);
+        cJSON *s_img = cJSON_GetObjectItemCaseSensitive(s_signed, "installed_image");
+        cJSON *s_fp = cJSON_GetObjectItemCaseSensitive(s_img, "filepath");
+        CHECK(cJSON_IsString(s_fp) &&
+              strcmp(s_fp->valuestring, "aktualino-lua/1.4.0/blink.be") == 0);
+
+        /* outer primary_ecu_serial is still the primary */
+        cJSON *p2 = cJSON_GetObjectItemCaseSensitive(osigned2, "primary_ecu_serial");
+        CHECK_STREQ(p2->valuestring, "aktualino-esp32-01");
+
+        /* regression: the single-ECU manifest (evm) has NO secondary entry */
+        CHECK_MSG(cJSON_GetObjectItemCaseSensitive(evm, "aktualino-lua-01") == NULL,
+                  "single-ECU manifest has no secondary entry");
+
+        cJSON_Delete(outer2);
+        free(json2);
+    }
+
     cJSON_Delete(outer);
     free(json);
     TEST_SUMMARY("manifest");
