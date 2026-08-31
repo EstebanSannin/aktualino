@@ -42,6 +42,10 @@
 #include "aktualino_store.h"
 #include "aktualino_portal.h"
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+#include "aktualino_berry.h"   /* optional Berry script secondary (Kconfig-gated) */
+#endif
+
 /*
  * A2 baked Torizon provisioning client (dev-only). main/provision_client.h is
  * generated at build time by tools/sync-build.sh from
@@ -670,6 +674,55 @@ static void maybe_factory_reset(void)
     esp_restart();
 }
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+/*
+ * S0 self-test for the Berry script secondary (docs/berry-secondary-spec.md).
+ * Kconfig-gated, so a feature-off build is byte-identical to before. Runs a tiny
+ * embedded bundle through the real on-target VM to prove it boots and links
+ * (also what makes the app+Berry size measurable — without a reference the
+ * runtime is garbage-collected out). Host-API bindings proper live in
+ * aktualino_script (S3); these three natives are just enough to self-test.
+ */
+static volatile int s_berry_health;
+
+static int akt_l_log(bvm *vm) {
+    ESP_LOGI("berry", "%s", be_top(vm) >= 1 ? be_tostring(vm, 1) : "");
+    be_return_nil(vm);
+}
+static int akt_l_report(bvm *vm) {
+    int t = be_top(vm);
+    const char *n = (t >= 1) ? be_tostring(vm, 1) : "?";
+    long long v = (t >= 2 && be_isint(vm, 2)) ? (long long)be_toint(vm, 2) : 0;
+    ESP_LOGI("berry", "report %s=%lld", n, v);
+    be_return_nil(vm);
+}
+static int akt_l_health(bvm *vm) { s_berry_health = 1; be_return_nil(vm); }
+
+static void berry_s0_selftest(void)
+{
+    static const char SRC[] =
+        "def setup() log('berry v1.1.0 up') end\n"
+        "def loop() report('tick', 1) health_ok() end\n";
+    uint32_t heap0 = esp_get_free_heap_size();
+    akt_berry_t *rt = akt_berry_new();
+    if (!rt) { ESP_LOGE(TAG, "berry: vm alloc failed"); return; }
+    akt_berry_register(rt, "log",       akt_l_log);
+    akt_berry_register(rt, "report",    akt_l_report);
+    akt_berry_register(rt, "health_ok", akt_l_health);
+    if (akt_berry_load(rt, "selftest", SRC, sizeof(SRC) - 1) != 0) {
+        ESP_LOGE(TAG, "berry: bundle load failed: %s", akt_berry_last_error(rt));
+        akt_berry_free(rt);
+        return;
+    }
+    akt_berry_call(rt, "setup");
+    akt_berry_call(rt, "loop");
+    ESP_LOGI(TAG, "berry S0 selftest: %s (VM heap cost ~%u B)",
+             s_berry_health ? "OK (heartbeat seen)" : "NO HEARTBEAT",
+             (unsigned)(heap0 - esp_get_free_heap_size()));
+    akt_berry_free(rt);
+}
+#endif /* CONFIG_AKTUALINO_SCRIPT_SECONDARY */
+
 void app_main(void)
 {
     esp_err_t err = nvs_flash_init();
@@ -685,6 +738,10 @@ void app_main(void)
 
     bool pending_verify = false;
     boot_banner(&pending_verify);
+
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+    berry_s0_selftest();   /* prove the Berry runtime boots on-target (S0) */
+#endif
 
     /* Factory-reset-to-AP hook (SPEC §6.1, stubbed): a held BOOT button clears
      * identity + Wi-Fi + TUF and reboots into the portal. */

@@ -1,9 +1,15 @@
 # Aktualino — Berry script secondary (Uptane-signed on-device plugins)
 
-> _Status: **v0.1 — design draft for alignment.** No code yet. This document exists so we can argue
-> about scope before writing any. It builds on the shipped firmware client (`SPEC.md`) and reuses its
-> two-repo Uptane verification + delivery machinery unchanged. Sections marked `VALIDATE` must be
-> proven against the live backend before we depend on them._
+> _Status: **v0.1 — design agreed; S0 in progress on branch `feat/berry-secondary`.** Built on the
+> shipped firmware client (`SPEC.md`), reusing its two-repo Uptane verification + delivery machinery
+> unchanged. Sections marked `VALIDATE` must be proven against the live backend before we depend on
+> them._
+>
+> **As-built so far (S0):** Berry v1.1.0 vendored + embedding wrapper (`components/aktualino_berry`),
+> host test suite green, ESP-IDF component behind `CONFIG_AKTUALINO_SCRIPT_SECONDARY` (default off),
+> feature-on partition variants, and a Kconfig-gated on-target selftest. **Cross-built both targets on
+> the m920x:** the classic 4 MB WROVER fits feature-on with 103 KB (7 %) free in its 1.5 MB slot; the
+> S3 has 55 % free (§10, §12). Still pending in S0: flashing + observing the selftest/GPIO on hardware.
 >
 > **Backend scope: Torizon Cloud only** (`app.torizon.io` / `dgw.torizon.io`) — the sole backend per
 > CLAUDE.md rule #2; the shipped client already dropped the Actualis path.
@@ -303,9 +309,11 @@ ends at `0x320000`, leaving **896 KB** (`0xE0000`) unallocated under 4 MB. Propo
 | **`scripts`** (LittleFS) | **~512 KB** | **~128–256 KB** | `current` (verbatim bundle), `previous` (rollback), `staging` (download), `kv/` (persistent store), `state` (pending/confirmed/quarantine + versions) |
 
 The Berry VM and host API are **firmware** — they live in the shared app image (both OTA slots), not
-in `scripts`. Adding Berry grows the app binary by ~40 KB. On the S3's 3 MB slot that is trivial; on
-the classic's **1.5 MB** slot it lands inside the current free margin (~236–360 KB free today), but
-**that fit is the one classic-specific number to measure in S0** (§13) rather than assume.
+in `scripts`. **Measured (S0, idf v5.4):** the full Berry runtime + wrapper + selftest grows the app
+by **~133 KB** (more than the VM core alone — it includes Berry's string/json/math/time modules +
+const tables). On the S3's 3 MB slot that is trivial (55 % free). On the classic's **1.5 MB** slot the
+feature-on app is **1.40 MB → 103 KB (7 %) free** (vs 1.27 MB / 237 KB free feature-off) — so it
+**fits with margin.**
 
 ---
 
@@ -338,7 +346,7 @@ allowlist.
 
 | Item | Est. | Notes |
 |---|---|---|
-| Berry VM code (flash) | ~40 KB | in the shared app image; trivial on the S3's 3 MB slot, measured against the classic's 1.5 MB slot in S0 |
+| Berry runtime (flash) | **~133 KB measured** | full runtime + wrapper + selftest; in the shared app image. Classic feature-on app 1.40 MB / 1.5 MB slot → 103 KB (7 %) free; S3 1.35 MB / 3 MB → 55 % free (S0) |
 | Berry idle RAM | ~10 KB, in **PSRAM** | grows with script; PSRAM keeps it off the TLS/OTA SRAM path — both S3 and WROVER have PSRAM |
 | Bundle on flash | KB-scale | ×2 (current+previous) + staging, inside `scripts` (~512 KB S3 / ~128–256 KB classic) |
 | Scheduler task stack | few KB SRAM | lower priority than core/OTA |

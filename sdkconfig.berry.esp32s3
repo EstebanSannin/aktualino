@@ -1,0 +1,5 @@
+# Feature-ON build overlay for the Berry script secondary, ESP32-S3.
+# Layer AFTER sdkconfig.defaults + sdkconfig.defaults.esp32s3:
+#   idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32s3;sdkconfig.berry.esp32s3"
+CONFIG_AKTUALINO_SCRIPT_SECONDARY=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.esp32s3.scripts.csv"
