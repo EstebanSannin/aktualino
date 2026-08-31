@@ -13,6 +13,7 @@
 set -euo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 berry="$here/../berry"
+conf="$here/../conf"   # Aktualino's berry_conf.h shadows the vendored default
 # Berry sources #include "../generate/..." with a literal relative path, so the
 # codegen MUST land in berry/generate/ (adjacent to src/). It is gitignored.
 gen="$berry/generate"
@@ -24,11 +25,12 @@ mkdir -p "$gen"
 
 echo "[coc] generating const tables -> $gen"
 python3 "$berry/tools/coc/coc" -o "$gen" "$berry/src" "$berry/default" \
-        -c "$berry/default/berry_conf.h"
+        -c "$conf/berry_conf.h"
 
 echo "[cc]  compiling Berry + wrapper + test ($CC)"
+# -I conf FIRST so our berry_conf.h shadows the vendored default/.
 "$CC" -std=c99 -Os -Wall -Wextra -Wno-unused-parameter \
-      -I "$berry/src" -I "$berry/default" -I "$here/../include" \
+      -I "$conf" -I "$berry/src" -I "$here/../include" \
       "$berry"/src/*.c "$berry"/default/be_modtab.c "$berry"/default/be_port.c \
       "$here/../aktualino_berry.c" \
       "$here/akt_berry_spike.c" -lm -o "$out/akt_berry_spike"

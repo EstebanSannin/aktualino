@@ -1,0 +1,20 @@
+menu "Aktualino script secondary (Berry)"
+
+config AKTUALINO_SCRIPT_SECONDARY
+    bool "Enable the Berry script secondary (Uptane-signed on-device plugins)"
+    default n
+    help
+        Build the optional Berry script-secondary feature
+        (docs/berry-secondary-spec.md): a second, independently-versioned Uptane
+        target track that delivers small Berry scripts to a LittleFS partition and
+        runs them as a virtual secondary ECU (hardware id "aktualino-lua").
+
+        When DISABLED (the default), none of the Berry runtime or script components
+        are compiled, no scripts partition or second ECU exists, and the firmware
+        is byte-identical to a build without the feature. Enable it (e.g. per-target
+        for the ESP32-S3) to opt in.
+
+        This single switch gates both the aktualino_berry (VM) and, later,
+        aktualino_script (secondary logic) components.
+
+endmenu

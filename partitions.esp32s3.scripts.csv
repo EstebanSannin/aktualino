@@ -1,0 +1,22 @@
+# Aktualino partition table — ESP32-S3, 8 MB flash, WITH the Berry script
+# secondary (CONFIG_AKTUALINO_SCRIPT_SECONDARY=y). See docs/berry-secondary-spec.md §10.
+#
+# Identical to partitions.esp32s3.csv (same nvs/otadata/phy/ota_0/ota_1 OFFSETS
+# AND SIZES) plus a `scripts` LittleFS partition carved from the ~1.9 MB of
+# headroom that already sat unallocated above ota_1 (end 0x620000) under 8 MB
+# (0x800000). The OTA slots do not move, so no-Berry <-> Berry firmware stays
+# OTA-compatible both directions.
+#
+# `scripts` holds: current/previous bundle (verbatim), staging, and the KV store.
+# 512 KB is generous (room for future archive bundles); ~1.4 MB stays free.
+#
+# App (ota_*) partitions must be aligned to 0x10000 (64 KB); data to 0x1000 (4 KB).
+#
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x6000,
+otadata,    data, ota,     0xf000,   0x2000,
+phy_init,   data, phy,     0x11000,  0x1000,
+ota_0,      app,  ota_0,   0x20000,  0x300000,
+ota_1,      app,  ota_1,   0x320000, 0x300000,
+scripts,    data, spiffs,  0x620000, 0x80000,
+# End of scripts: 0x6A0000 — leaves ~0x160000 (1.4 MB) headroom under 0x800000 (8 MB).
