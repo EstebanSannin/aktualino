@@ -28,9 +28,10 @@ idf_component_register(
         aktualino_portal
         # GPIO for the factory-reset-to-AP hook (BOOT/GPIO0).
         driver
-        # Optional Berry script secondary (empty component unless the Kconfig
-        # switch is on, so this REQUIRES is harmless when the feature is off).
+        # Optional Berry script secondary (empty components unless the Kconfig
+        # switch is on, so these REQUIRES are harmless when the feature is off).
         aktualino_berry
+        aktualino_script
     EMBED_TXTFILES
         # Pinned self-signed CA for the dumb update server. Generated
         # (CN/SAN = reachable server IP) into main/certs/; gitignored, rsynced

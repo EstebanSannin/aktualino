@@ -124,6 +124,21 @@ esp_err_t aktualino_prov_report_installed(const char *filepath,
 esp_err_t aktualino_prov_report_failed(const char *hardware_id,
                                        const char *correlation_id);
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+/*
+ * Report the SECONDARY (Berry bundle) install to the Director (spec §14.7).
+ * Sends a dual-ECU manifest whose installation_report is scoped to the secondary
+ * ecu — result item for the secondary serial, report.correlation_id =
+ * `correlation_id` (the secondary target's id) — so Torizon completes that
+ * update. The secondary's installed_image is {filepath, sha256, length} of the
+ * installed bundle; the primary is reported as its current running image. Only
+ * built when the script secondary is enabled. Returns ESP_OK on HTTP 200/204.
+ */
+esp_err_t aktualino_prov_report_secondary(const char *filepath,
+                                          const uint8_t sha256[32], size_t length,
+                                          const char *correlation_id, bool success);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -43,7 +43,8 @@
 #include "aktualino_portal.h"
 
 #if CONFIG_AKTUALINO_SCRIPT_SECONDARY
-#include "aktualino_berry.h"   /* optional Berry script secondary (Kconfig-gated) */
+#include "aktualino_berry.h"    /* optional Berry script secondary (Kconfig-gated) */
+#include "aktualino_script.h"   /* the secondary's install + run + report logic */
 #endif
 
 /*
@@ -470,6 +471,13 @@ static void run_director_poll_loop(void)
                      poll, esp_err_to_name(err));
         }
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+        /* Second Uptane track: check the aktualino-lua bundle target, install +
+         * run + report it (docs/berry-secondary-spec.md). Independent of the
+         * primary A/B firmware flow; never reboots. */
+        aktualino_script_poll((int64_t)nowt);
+#endif
+
         /* Keep the device "current" in the director (first poll + periodically). */
         if (poll == 1 || (poll % MANIFEST_EVERY_N_POLLS) == 0) {
             esp_err_t mrc = aktualino_prov_report_current(AKTUALINO_HARDWARE_ID);
@@ -740,7 +748,8 @@ void app_main(void)
     boot_banner(&pending_verify);
 
 #if CONFIG_AKTUALINO_SCRIPT_SECONDARY
-    berry_s0_selftest();   /* prove the Berry runtime boots on-target (S0) */
+    berry_s0_selftest();          /* prove the Berry runtime boots on-target (S0) */
+    aktualino_script_init();      /* locate the scripts partition; run any installed bundle */
 #endif
 
     /* Factory-reset-to-AP hook (SPEC §6.1, stubbed): a held BOOT button clears
