@@ -12,7 +12,12 @@
 > feature-on with 103 KB (7 %) free in its 1.5 MB slot; the S3 has 55 % free (§10, §12). **Flashed to
 > the classic ESP32 (D0WD): the selftest runs `setup()`/`loop()` + host natives + the health_ok
 > heartbeat on-target, ~4 KB VM heap, alongside the normal OTA client** (`test/evidence/s0-berry-hardware.log`).
-> Next: S1 (dual-ECU identity).
+>
+> **S1 (dual-ECU identity) — device done + registration proven on Torizon Cloud.** Portable dual-ECU
+> manifest builder (host tests 7/7) + on-device secondary registration/manifest (Kconfig-gated). Live:
+> the `aktualino-lua` secondary registers (`/director/ecus` → 200, key reuse) and the dual-ECU manifest
+> is ACCEPTED (§14.2, `test/evidence/s1-torizon-register.log`). Remaining: §14.1 target **assignment**
+> to the secondary ecu_serial.
 >
 > **Backend scope: Torizon Cloud only** (`app.torizon.io` / `dgw.torizon.io`) — the sole backend per
 > CLAUDE.md rule #2; the shipped client already dropped the Actualis path.
@@ -382,7 +387,10 @@ only board-specific number left is the classic app-slot fit (S0).
    in Director `targets.json` for the secondary serial). If assignment is primary-only in the product
    surface, fall back to the alternative model (one primary ECU, second target distinguished by
    custom metadata — noted, not chosen).
-2. **`VALIDATE`:** director accepts two ECUs sharing one `clientKey` (§3.1).
+2. **RESOLVED (S1, live Torizon Cloud):** the director **accepts two ECUs sharing one `clientKey`**
+   (`POST /director/ecus` with primary + `aktualino-lua` secondary, same Ed25519 key → HTTP 200) and
+   **accepts the dual-ECU V3 manifest** (`PUT /director/manifest` → 200 ACCEPTED). Evidence:
+   `test/evidence/s1-torizon-register.log`.
 3. Manifest shape for a **quarantined / API-refused** bundle — exact `installation_report` +
    `attacks_detected` fields Torizon's director accepts and surfaces (extend `SPEC.md` Appendix A).
 4. Berry amalgamation ergonomics — do we ship one hand-written `.be`, or a tiny CI step that
