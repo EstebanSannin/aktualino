@@ -55,6 +55,15 @@ typedef struct {
     const char  *ecu_serial;        /* the secondary's ecu_serial (e.g. "…-lua") */
     akt_target_t installed;         /* installed bundle image (or empty placeholder) */
     const char  *attacks_detected;  /* "" or a cause (API-mismatch/quarantine/rollback) */
+    /*
+     * Report-back for a SECONDARY install (spec §14.7). When correlation_id is
+     * non-NULL/non-empty, the manifest's installation_report is scoped to THIS
+     * secondary (result item for its ecu_serial, report.correlation_id = the
+     * secondary target's correlation id) so Torizon completes the secondary
+     * update. Leave NULL for a heartbeat manifest (installed_image only).
+     */
+    const char  *correlation_id;
+    bool         success;           /* the secondary install result, when correlation_id set */
 } akt_secondary_t;
 
 /*

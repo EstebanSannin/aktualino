@@ -166,6 +166,46 @@ int main(void)
         free(json2);
     }
 
+    /* --- secondary-scoped installation_report drives completion (spec §14.7) --- */
+    {
+        akt_secondary_t sec;
+        memset(&sec, 0, sizeof(sec));
+        sec.ecu_serial = "aktualino-lua-01";
+        sec.attacks_detected = "";
+        strcpy(sec.installed.filepath, "aktualino-lua/1.4.0/blink.be");
+        sec.installed.length = 320;
+        for (int i = 0; i < 32; i++) sec.installed.sha256[i] = (uint8_t)(i * 3 + 9);
+        sec.correlation_id = "corr-lua-abc123";   /* the secondary update's id */
+        sec.success = true;
+
+        size_t len3 = 0;
+        char *json3 = akt_build_manifest_ex("aktualino-esp32-01", &installed, "",
+                                            NULL, true, &sec, pk, sk, &len3);
+        CHECK(json3 != NULL);
+        cJSON *outer3 = cJSON_Parse(json3);
+        CHECK(outer3 != NULL);
+
+        cJSON *osigned3 = cJSON_GetObjectItemCaseSensitive(outer3, "signed");
+        cJSON *ir3 = cJSON_GetObjectItemCaseSensitive(osigned3, "installation_report");
+        CHECK_MSG(cJSON_IsObject(ir3), "installation_report present for the secondary");
+        cJSON *rep = cJSON_GetObjectItemCaseSensitive(ir3, "report");
+        cJSON *corr = cJSON_GetObjectItemCaseSensitive(rep, "correlation_id");
+        CHECK(cJSON_IsString(corr));
+        CHECK_STREQ(corr->valuestring, "corr-lua-abc123");
+        /* report.items[0].ecu must be the SECONDARY ecu_serial, not the primary */
+        cJSON *items = cJSON_GetObjectItemCaseSensitive(rep, "items");
+        cJSON *item0 = cJSON_GetArrayItem(items, 0);
+        cJSON *ecu = cJSON_GetObjectItemCaseSensitive(item0, "ecu");
+        CHECK(cJSON_IsString(ecu));
+        CHECK_STREQ(ecu->valuestring, "aktualino-lua-01");
+        cJSON *rres = cJSON_GetObjectItemCaseSensitive(rep, "result");
+        cJSON *rsucc = cJSON_GetObjectItemCaseSensitive(rres, "success");
+        CHECK_MSG(cJSON_IsTrue(rsucc), "report.result.success is true");
+
+        cJSON_Delete(outer3);
+        free(json3);
+    }
+
     cJSON_Delete(outer);
     free(json);
     TEST_SUMMARY("manifest");

@@ -483,9 +483,25 @@ char *akt_build_manifest_ex(const char *primary_ecu_serial,
     if (sec_env)
         cJSON_AddItemToObject(evm, secondary->ecu_serial, sec_env);
     cJSON_AddItemToObject(outer, "ecu_version_manifests", evm);
-    if (correlation_id && correlation_id[0]) {
-        cJSON *ir = build_installation_report(correlation_id,
-                                              primary_ecu_serial, success);
+    /*
+     * The installation_report drives update completion, so it is scoped to the
+     * ECU that just installed. A secondary install (secondary->correlation_id
+     * set) reports the secondary; otherwise the primary's correlation_id, if any,
+     * reports the primary; otherwise no report (heartbeat). (spec §14.7)
+     */
+    const char *ir_corr = NULL, *ir_ecu = NULL;
+    bool ir_success = true;
+    if (secondary && secondary->correlation_id && secondary->correlation_id[0]) {
+        ir_corr = secondary->correlation_id;
+        ir_ecu  = secondary->ecu_serial;
+        ir_success = secondary->success;
+    } else if (correlation_id && correlation_id[0]) {
+        ir_corr = correlation_id;
+        ir_ecu  = primary_ecu_serial;
+        ir_success = success;
+    }
+    if (ir_corr) {
+        cJSON *ir = build_installation_report(ir_corr, ir_ecu, ir_success);
         if (!ir) { cJSON_Delete(outer); return NULL; }
         cJSON_AddItemToObject(outer, "installation_report", ir);
     } else {
