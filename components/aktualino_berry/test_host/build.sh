@@ -26,9 +26,11 @@ echo "[coc] generating const tables -> $gen"
 python3 "$berry/tools/coc/coc" -o "$gen" "$berry/src" "$berry/default" \
         -c "$berry/default/berry_conf.h"
 
-echo "[cc]  compiling Berry + spike ($CC)"
-"$CC" -std=c99 -Os -Wall -I "$berry/src" -I "$berry/default" \
+echo "[cc]  compiling Berry + wrapper + test ($CC)"
+"$CC" -std=c99 -Os -Wall -Wextra -Wno-unused-parameter \
+      -I "$berry/src" -I "$berry/default" -I "$here/../include" \
       "$berry"/src/*.c "$berry"/default/be_modtab.c "$berry"/default/be_port.c \
+      "$here/../aktualino_berry.c" \
       "$here/akt_berry_spike.c" -lm -o "$out/akt_berry_spike"
 
 echo "[run]"
