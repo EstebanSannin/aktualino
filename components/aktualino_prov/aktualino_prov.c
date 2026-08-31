@@ -83,6 +83,19 @@ static void derive_ecu_serial(char out[40], uint32_t nonce)
     out[p] = '\0';
 }
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+/*
+ * Secondary (Berry script) ecu_serial = "lua" + the primary serial. Deterministic
+ * (so registration and every manifest agree without extra NVS), unique per
+ * device, and alphabetic — a valid ecu identifier (spec §3). With the 32-char
+ * primary this is 35 chars, well within the 10–64 predicate.
+ */
+static void derive_secondary_serial(const char *primary, char out[70])
+{
+    snprintf(out, 70, "lua%s", primary);
+}
+#endif
+
 static void derive_device_name(char out[48], uint32_t nonce)
 {
     uint8_t mac[6] = {0};
@@ -127,6 +140,34 @@ static esp_err_t register_ecu(const aktualino_prov_inputs_t *in,
                             in->hardware_id ? in->hardware_id : "aktualino-esp32");
     cJSON_AddItemToObject(ecu, "clientKey", key);
     cJSON_AddItemToArray(ecus, ecu);
+
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+    /* Register the Berry script secondary as a SECOND ECU, reusing the primary's
+     * Ed25519 clientKey (spec §3): the director keys verification per ecu_serial,
+     * and both ECUs are the same chip. `VALIDATE`: this is the point that proves
+     * the director accepts two ECUs sharing a clientKey. */
+    {
+        char lua_serial[70];
+        derive_secondary_serial(creds->ecu_serial, lua_serial);
+        cJSON *ecu2 = cJSON_CreateObject();
+        cJSON *key2 = cJSON_CreateObject();
+        cJSON *keyval2 = cJSON_CreateObject();
+        if (ecu2 && key2 && keyval2) {
+            cJSON_AddStringToObject(keyval2, "public", pk_hex);   /* same key */
+            cJSON_AddStringToObject(key2, "keytype", "ED25519");
+            cJSON_AddItemToObject(key2, "keyval", keyval2);
+            cJSON_AddStringToObject(ecu2, "ecu_serial", lua_serial);
+            cJSON_AddStringToObject(ecu2, "hardware_identifier", "aktualino-lua");
+            cJSON_AddItemToObject(ecu2, "clientKey", key2);
+            cJSON_AddItemToArray(ecus, ecu2);
+            ESP_LOGI(TAG, "ecu-register: + secondary %s (hwid aktualino-lua, key reuse)",
+                     lua_serial);
+        } else {
+            cJSON_Delete(ecu2); cJSON_Delete(key2); cJSON_Delete(keyval2);
+        }
+    }
+#endif
+
     cJSON_AddStringToObject(root, "primary_ecu_serial", creds->ecu_serial);
     cJSON_AddItemToObject(root, "ecus", ecus);
 
@@ -176,8 +217,30 @@ static esp_err_t post_manifest(const aktualino_creds_t *creds,
                                const char *correlation_id, bool success)
 {
     size_t mlen = 0;
-    char *man = akt_build_manifest_report(creds->ecu_serial, inst, "",
-                                          correlation_id, success, pk, sk, &mlen);
+    char *man;
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+    /* Report the secondary ECU alongside the primary. Until aktualino_script (S3)
+     * tracks an installed bundle, report the empty-image placeholder: filepath
+     * "unknown", length 0, sha256 of the empty string. The correlation_id/report
+     * still scopes to the primary (a bundle-install report is S2/S4). */
+    char lua_serial[70];
+    derive_secondary_serial(creds->ecu_serial, lua_serial);
+    static const uint8_t SHA256_EMPTY[32] = {
+        0xe3,0xb0,0xc4,0x42,0x98,0xfc,0x1c,0x14, 0x9a,0xfb,0xf4,0xc8,0x99,0x6f,0xb9,0x24,
+        0x27,0xae,0x41,0xe4,0x64,0x9b,0x93,0x4c, 0xa4,0x95,0x99,0x1b,0x78,0x52,0xb8,0x55 };
+    akt_secondary_t sec;
+    memset(&sec, 0, sizeof(sec));
+    sec.ecu_serial = lua_serial;
+    sec.attacks_detected = "";
+    strcpy(sec.installed.filepath, "unknown");
+    sec.installed.length = 0;
+    memcpy(sec.installed.sha256, SHA256_EMPTY, 32);
+    man = akt_build_manifest_ex(creds->ecu_serial, inst, "",
+                                correlation_id, success, &sec, pk, sk, &mlen);
+#else
+    man = akt_build_manifest_report(creds->ecu_serial, inst, "",
+                                    correlation_id, success, pk, sk, &mlen);
+#endif
     if (!man) { ESP_LOGE(TAG, "manifest build failed"); return ESP_FAIL; }
 
     char url[256];
