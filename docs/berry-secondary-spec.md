@@ -19,9 +19,16 @@
 > is ACCEPTED (§14.2, `test/evidence/s1-torizon-register.log`). **The headline §14.1 unknown is now a
 > YES:** a bundle target published for hwid `aktualino-lua` and assigned via the Platform API reaches
 > the device's signature+cross-repo-verified Director `targets.json` (§14.1,
-> `test/evidence/s1-torizon-assign.log`) — **delivery** to a secondary is proven (update `Assigned →
-> Seen`). The update does **not** yet complete: install (S2/S3) and the **secondary-scoped
-> report-back** (§14.7) are still to build. Next: S2/S3 (install + run + report the delivered bundle).
+> `test/evidence/s1-torizon-assign.log`).
+>
+> **S2/S3 — the loop is CLOSED, on hardware + real Torizon Cloud.** `akt_build_manifest_ex` gained a
+> secondary-scoped `installation_report` (S2.1, host-tested), and the new `aktualino_script` component
+> (S3) selects the `aktualino-lua` target, two-repo cross-verifies, downloads (302→S3), runs the
+> bundle in Berry (`setup()` executed on-device), stores it in the `scripts` partition, and reports
+> back — flipping the `aktualino-lua-1.0.0` update **`Seen → Completed / OK / success`**
+> (`test/evidence/s3-bundle-install.log`). Publish → assign → deliver → run → complete, end-to-end.
+> Remaining: S4 hardening (heartbeat-required confirm gate + keep-last-good rollback + quarantine;
+> LittleFS+KV; capability allowlist).
 >
 > **Backend scope: Torizon Cloud only** (`app.torizon.io` / `dgw.torizon.io`) — the sole backend per
 > CLAUDE.md rule #2; the shipped client already dropped the Actualis path.
@@ -392,18 +399,15 @@ only board-specific number left is the classic app-slot fit (S0).
    (v12→v13) and passed signature+cross-repo verification; the current firmware correctly sees it but
    does not misapply it to the primary A/B flow. The Platform API lists the device with both ECUs, the
    secondary reporting our empty-image placeholder. Evidence: `test/evidence/s1-torizon-assign.log`.
-   The fallback model is no longer needed. **Scope note:** this proves **delivery** — the update went
-   `Assigned → Seen`. It does **not** complete: the update stays in-progress (status `Seen`) until the
-   device installs the bundle (S2/S3) **and** reports it back — see the new item #7.
-7. **OPEN (found in S1, must build in S2/S4) — secondary-scoped report-back / update completion.**
-   Torizon marks a secondary update `Completed` only when the device sends an `installation_report`
-   carrying **that update's `correlation_id`** with a **result item for the secondary ecu_serial**.
-   Today `post_manifest`/`build_installation_report` scope the report to the **primary** ecu only, and
-   the device selects targets by the primary hwid so it never extracts the secondary target's
-   `correlation_id`. S2/S3 must: select the secondary target by hwid `aktualino-lua`, extract its
-   `correlation_id`, install the bundle, then emit an `installation_report` scoped to the secondary
-   (extend `akt_build_manifest_ex` + `build_installation_report`). Until then a secondary assignment
-   correctly hangs at `Seen`.
+   The fallback model is no longer needed. **Completion also proven (S3):** the same update went
+   `Seen → Completed` via a real install — see item #7.
+7. **RESOLVED (S3) — secondary-scoped report-back / update completion.** The device now selects the
+   `aktualino-lua` target by hwid, extracts its `correlation_id`, two-repo cross-verifies + downloads
+   + runs the bundle in Berry, stores it, and sends an `installation_report` scoped to the secondary
+   (`akt_build_manifest_ex` + a secondary correlation id, via `aktualino_prov_report_secondary`). On
+   real Torizon Cloud the `aktualino-lua-1.0.0` update reached **Completed / resultCode OK /
+   success** (`test/evidence/s3-bundle-install.log`). The whole loop — publish → assign → deliver →
+   run → complete — is proven end-to-end on hardware.
 2. **RESOLVED (S1, live Torizon Cloud):** the director **accepts two ECUs sharing one `clientKey`**
    (`POST /director/ecus` with primary + `aktualino-lua` secondary, same Ed25519 key → HTTP 200) and
    **accepts the dual-ECU V3 manifest** (`PUT /director/manifest` → 200 ACCEPTED). Evidence:
