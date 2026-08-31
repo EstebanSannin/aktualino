@@ -5,11 +5,14 @@
 > unchanged. Sections marked `VALIDATE` must be proven against the live backend before we depend on
 > them._
 >
-> **As-built so far (S0):** Berry v1.1.0 vendored + embedding wrapper (`components/aktualino_berry`),
-> host test suite green, ESP-IDF component behind `CONFIG_AKTUALINO_SCRIPT_SECONDARY` (default off),
-> feature-on partition variants, and a Kconfig-gated on-target selftest. **Cross-built both targets on
-> the m920x:** the classic 4 MB WROVER fits feature-on with 103 KB (7 %) free in its 1.5 MB slot; the
-> S3 has 55 % free (§10, §12). Still pending in S0: flashing + observing the selftest/GPIO on hardware.
+> **S0 COMPLETE (hardware-proven).** Berry v1.1.0 vendored + embedding wrapper
+> (`components/aktualino_berry`), host test suite green, ESP-IDF component behind
+> `CONFIG_AKTUALINO_SCRIPT_SECONDARY` (default off), feature-on partition variants, and a Kconfig-gated
+> on-target selftest. **Cross-built both targets on the m920x:** the classic 4 MB WROVER fits
+> feature-on with 103 KB (7 %) free in its 1.5 MB slot; the S3 has 55 % free (§10, §12). **Flashed to
+> the classic ESP32 (D0WD): the selftest runs `setup()`/`loop()` + host natives + the health_ok
+> heartbeat on-target, ~4 KB VM heap, alongside the normal OTA client** (`test/evidence/s0-berry-hardware.log`).
+> Next: S1 (dual-ECU identity).
 >
 > **Backend scope: Torizon Cloud only** (`app.torizon.io` / `dgw.torizon.io`) — the sole backend per
 > CLAUDE.md rule #2; the shipped client already dropped the Actualis path.
