@@ -1,0 +1,71 @@
+Aktualino Berry secondary — §14.1 validation on real Torizon Cloud (2026-09-01)
+=============================================================================
+QUESTION (spec §14.1): can a generic-package target be PUBLISHED for the
+secondary hardware id (aktualino-lua) and ASSIGNED to the device's secondary
+ECU, and does the assignment reach the device's two-repo-verified Director
+metadata?  ANSWER: YES.
+
+Device: deviceUuid 5c2813a6-9a0b-4653-96aa-851518d71aba (aktualino-esp32-85d66f),
+primary ECU hwid aktualino-esp32, secondary ECU hwid aktualino-lua (registered in
+S1, key reuse — see s1-torizon-register.log).
+
+1) PLATFORM API shows BOTH ECUs on the device (read):
+   GET https://app.torizon.io/api/v2beta/devices/{uuid} -> 200
+     component "aktualino-esp32" installed packageId aktualino-esp32-0.1.0
+     component "aktualino-lua"   installed packageId "unknown",
+        sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+        (= sha256 of "" — the empty-image placeholder our manifest reports)
+
+2) PUBLISH a BINARY bundle target for hwid aktualino-lua (garage-tools token):
+   GET  {repo}/api/v1/user_repo/root.json                       -> 200 (base ok)
+   PUT  {repo}/api/v1/user_repo/targets/aktualino-lua-1.0.0
+        ?name=aktualino-lua&version=1.0.0&hardwareIds=aktualino-lua&targetFormat=BINARY
+        (application/octet-stream, 172 bytes,
+         sha256 a982ca474eb7a77b80161f87084a7b7bf91b32e04aa465cf9a076cbf4773151b)
+                                                                 -> 204 (published)
+   bundle content = a minimal .be:
+     #- aktualino-bundle -#
+     var BUNDLE = { "schema": 1, "version": "1.0.0", "requires_host_api": 1 }
+     def setup() log("lua secondary live via Torizon Uptane") end
+     def loop() end
+
+3) ASSIGN the package to the device (Platform API v2, tzn_api token):
+   POST https://app.torizon.io/api/v2beta/updates
+        {"packageIds":["aktualino-lua-1.0.0"], "devices":["5c2813a6-...-71aba"]}
+                                                                 -> 201
+     {"affected":[{"deviceUuid":"5c2813a6-9a0b-4653-96aa-851518d71aba",
+       "deviceId":"aktualino-esp32-85d66f-5c2813","name":"aktualino-esp32-85d66f"}],
+      "notAffected":[]}
+
+4) THE ASSIGNMENT REACHES THE DEVICE (on-device serial, next Director poll):
+   GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=981)
+     (was 563 bytes / v12 before the assignment; now 981 bytes / v13 — the
+      aktualino-lua target entry was added)
+   Director targets  : VERIFY PASS (signature threshold met, expiry OK,
+                        version 13 >= stored 13) — persisted
+   no update assigned — up to date (no target for aktualino-esp32)
+     ^ CORRECT: the device selects targets by the PRIMARY hwid (aktualino-esp32);
+       the new target is for the SECONDARY hwid (aktualino-lua), so the current
+       firmware sees it in verified metadata but does not misapply it to the
+       primary A/B flow. Installing the bundle is S2/S3 (aktualino_script).
+
+5) UPDATE LIFECYCLE STATUS (Platform API) — DELIVERY yes, COMPLETION not yet:
+   GET https://app.torizon.io/api/v2beta/updates/devices/{uuid}
+     { "updateId":"01a05a04-6af4-7231-9c69-4fb6e7b2c68d",
+       "status":"Seen", "completedAt":null, "deviceResult":null,
+       "packages":{"aktualino-lua":"aktualino-lua-1.0.0"} }
+   => the update went Assigned -> **Seen** (device fetched + cross-repo-verified
+      the target) but is NOT Completed and stays in-progress, because the device
+      does not install the bundle yet (no aktualino_script — S2/S3) AND, even once
+      it does, the current firmware's installation_report is scoped to the PRIMARY
+      ecu only. To COMPLETE a secondary update the device must send an
+      installation_report carrying THIS update's correlation_id with a result item
+      for the SECONDARY ecu_serial. That report-back is an S2/S4 requirement
+      (build_installation_report + akt_build_manifest_ex must accept a
+      secondary-scoped report + correlation_id).
+
+CONCLUSION: DELIVERY to a secondary ECU is proven on real Torizon Cloud (publish
+204 + assign 201 + device sees it in sig/cross-repo-verified Director metadata,
+Assigned -> Seen). The full update LOOP (install -> report -> Completed) for the
+secondary is NOT yet proven — install is S2/S3 and the secondary-scoped
+installation_report is S2/S4. §14.1: delivery RESOLVED; completion OPEN.

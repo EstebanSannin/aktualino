@@ -16,8 +16,12 @@
 > **S1 (dual-ECU identity) — device done + registration proven on Torizon Cloud.** Portable dual-ECU
 > manifest builder (host tests 7/7) + on-device secondary registration/manifest (Kconfig-gated). Live:
 > the `aktualino-lua` secondary registers (`/director/ecus` → 200, key reuse) and the dual-ECU manifest
-> is ACCEPTED (§14.2, `test/evidence/s1-torizon-register.log`). Remaining: §14.1 target **assignment**
-> to the secondary ecu_serial.
+> is ACCEPTED (§14.2, `test/evidence/s1-torizon-register.log`). **The headline §14.1 unknown is now a
+> YES:** a bundle target published for hwid `aktualino-lua` and assigned via the Platform API reaches
+> the device's signature+cross-repo-verified Director `targets.json` (§14.1,
+> `test/evidence/s1-torizon-assign.log`) — **delivery** to a secondary is proven (update `Assigned →
+> Seen`). The update does **not** yet complete: install (S2/S3) and the **secondary-scoped
+> report-back** (§14.7) are still to build. Next: S2/S3 (install + run + report the delivered bundle).
 >
 > **Backend scope: Torizon Cloud only** (`app.torizon.io` / `dgw.torizon.io`) — the sole backend per
 > CLAUDE.md rule #2; the shipped client already dropped the Actualis path.
@@ -380,13 +384,26 @@ only board-specific number left is the classic app-slot fit (S0).
 
 ## 14. Open questions / validation items
 
-1. **`VALIDATE` (the one real unknown):** can Torizon Cloud's **console + platform API** *assign* a
-   generic-package target to a **secondary** ecu_serial/hardware id on a device (not just the
-   primary)? The director targets secondaries for containers, so the capability exists; prove the
-   assignment surface end-to-end (publish `aktualino-lua` package → assign to device → device sees it
-   in Director `targets.json` for the secondary serial). If assignment is primary-only in the product
-   surface, fall back to the alternative model (one primary ECU, second target distinguished by
-   custom metadata — noted, not chosen).
+1. **RESOLVED (S1, live Torizon Cloud) — the headline unknown is a YES.** A generic-package bundle
+   **can be published for hwid `aktualino-lua` and assigned to the device's secondary ECU**:
+   `PUT …/user_repo/targets/aktualino-lua-1.0.0?…&hardwareIds=aktualino-lua&targetFormat=BINARY` → 204;
+   `POST /api/v2beta/updates {packageIds:["aktualino-lua-1.0.0"], devices:[uuid]}` → 201 (device
+   *affected*). The assignment **reaches the device**: its Director `targets.json` grew 563→981 B
+   (v12→v13) and passed signature+cross-repo verification; the current firmware correctly sees it but
+   does not misapply it to the primary A/B flow. The Platform API lists the device with both ECUs, the
+   secondary reporting our empty-image placeholder. Evidence: `test/evidence/s1-torizon-assign.log`.
+   The fallback model is no longer needed. **Scope note:** this proves **delivery** — the update went
+   `Assigned → Seen`. It does **not** complete: the update stays in-progress (status `Seen`) until the
+   device installs the bundle (S2/S3) **and** reports it back — see the new item #7.
+7. **OPEN (found in S1, must build in S2/S4) — secondary-scoped report-back / update completion.**
+   Torizon marks a secondary update `Completed` only when the device sends an `installation_report`
+   carrying **that update's `correlation_id`** with a **result item for the secondary ecu_serial**.
+   Today `post_manifest`/`build_installation_report` scope the report to the **primary** ecu only, and
+   the device selects targets by the primary hwid so it never extracts the secondary target's
+   `correlation_id`. S2/S3 must: select the secondary target by hwid `aktualino-lua`, extract its
+   `correlation_id`, install the bundle, then emit an `installation_report` scoped to the secondary
+   (extend `akt_build_manifest_ex` + `build_installation_report`). Until then a secondary assignment
+   correctly hangs at `Seen`.
 2. **RESOLVED (S1, live Torizon Cloud):** the director **accepts two ECUs sharing one `clientKey`**
    (`POST /director/ecus` with primary + `aktualino-lua` secondary, same Ed25519 key → HTTP 200) and
    **accepts the dual-ECU V3 manifest** (`PUT /director/manifest` → 200 ACCEPTED). Evidence:
