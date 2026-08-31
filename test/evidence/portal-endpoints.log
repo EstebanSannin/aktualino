@@ -1,0 +1,16 @@
+=== GET /config ===
+{"ap_ssid":"aktualino-e40398","chip":"ESP32","backend_name":"Torizon Cloud","hardware_id":"aktualino-esp32","device_name":"aktualino-esp32-e40398","credential_needed":false}
+=== GET / (headers) ===
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 6888
+Content-Encoding: gzip
+Cache-Control: no-store
+
+=== GET / (gzip decoded size) ===
+23284
+=== GET /scan ===
+{"networks":[{"ssid":"SKYWIFI_FU863","rssi":-55,"auth":3},{"ssid":"DroniX-TIM","rssi":-61,"auth":3},{"ssid":"DroniX-Wind","rssi":-67,"auth":3},{"ssid":"TrattoriaDeiSistemiOperativi","rssi":-71,"auth":3},{"ssid":"Torizon","rssi":-71,"auth":4},{"ssid":"@Ruijie-b6401","rssi":-78,"auth":0},{"ssid":"WINDTRE-F193","rssi":-92,"auth":4}]}=== GET /status (pre-submit) ===
+{"state":"idle"}
+=== captive probe /generate_204 (expect 302) ===
+302 -> http://192.168.4.1/

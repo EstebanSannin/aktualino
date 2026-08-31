@@ -1,0 +1,131 @@
+# Phase 3 backend cross-check — self-hosted OTA backend on m920x — generated 2026-08-31T04:06:59Z
+# Device uuid=397adb9b-672b-43e4-90e8-c96d7dc6fd3b primaryEcu=aktualinoespieaniooeadjikkmiaohf hardwareId=aktualino-esp32
+
+## Published image-repo target (reposerver user_repo, LOCAL storage, keyserver online-signed)
+{
+ "target": "aktualino-esp32-0.2.0",
+ "length": 1189488,
+ "sha256": "f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27",
+ "custom": {
+  "createdAt": "2026-08-31T03:56:21Z",
+  "hardwareIds": [
+   "aktualino-esp32"
+  ],
+  "name": "aktualino-esp32",
+  "targetFormat": "BINARY",
+  "updatedAt": "2026-08-31T03:56:21Z",
+  "uri": null,
+  "version": "0.2.0"
+ }
+}
+
+## Assignment (director) — device targets.json at CHECKPOINT time was v2; now:
+{
+ "version": 4,
+ "correlationId": {
+  "correlationId": "urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95"
+ },
+ "targets": [
+  "aktualino-esp32-0.2.0"
+ ],
+ "target_detail": {
+  "aktualino-esp32-0.2.0": {
+   "custom": {
+    "ecuIdentifiers": {
+     "aktualinoespieaniooeadjikkmiaohf": {
+      "hardwareId": "aktualino-esp32"
+     }
+    },
+    "uri": null,
+    "userDefinedCustom": null
+   },
+   "hashes": {
+    "sha256": "f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27"
+   },
+   "length": 1189488
+  }
+ }
+}
+
+## Installed image now reported by the device (director admin ecus)
+[
+    {
+        "id": "aktualinoespieaniooeadjikkmiaohf",
+        "hardwareId": "aktualino-esp32",
+        "primary": true,
+        "image": {
+            "filepath": "aktualino-esp32-0.2.0",
+            "size": 1189488,
+            "hash": {
+                "sha256": "f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27"
+            }
+        }
+    }
+]
+
+## device-registry status
+{
+ "deviceName": "aktualino-esp32-e40398-aac80e75",
+ "deviceStatus": "UpToDate",
+ "lastSeen": "2026-08-31T04:06:28Z",
+ "activatedAt": "2026-08-31T03:31:16Z"
+}
+
+## Installation history (newest first) — the SUCCESS event is the Phase-3 completion
+{
+    "values": [
+        {
+            "namespace": "default",
+            "eventTime": "2026-08-31T04:02:47Z",
+            "correlationId": "urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95",
+            "deviceUuid": "397adb9b-672b-43e4-90e8-c96d7dc6fd3b",
+            "result": {
+                "success": true,
+                "code": "OK",
+                "description": "Device has been successfully installed"
+            },
+            "ecuReports": {
+                "aktualinoespieaniooeadjikkmiaohf": {
+                    "result": {
+                        "success": true,
+                        "code": "OK",
+                        "description": "Installing package was successful"
+                    },
+                    "target": [
+                        "aktualino-esp32-0.2.0"
+                    ],
+                    "rawReport": null
+                }
+            },
+            "rawReport": "Installation successful"
+        },
+        {
+            "namespace": "default",
+            "eventTime": "2026-08-31T03:57:51Z",
+            "correlationId": "urn:here-ota:mtu:01a055f6-4016-7f92-87e9-f0729472a4c3",
+            "deviceUuid": "397adb9b-672b-43e4-90e8-c96d7dc6fd3b",
+            "result": {
+                "success": false,
+                "code": "INSTALL_FAILED",
+                "description": "Device installation failed"
+            },
+            "ecuReports": {
+                "aktualinoespieaniooeadjikkmiaohf": {
+                    "result": {
+                        "success": false,
+                        "code": "INSTALL_FAILED",
+                        "description": "Installation failed"
+                    },
+                    "target": [
+                        "aktualino-esp32-0.1.0"
+                    ],
+                    "rawReport": null
+                }
+            },
+            "rawReport": "Installation failed"
+        }
+    ],
+    "total": 2,
+    "offset": 0,
+    "limit": 50
+}

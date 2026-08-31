@@ -1,0 +1,18 @@
+# Aktualino partition table — classic ESP32, 4 MB flash (factory-less A/B).
+#
+# Layout rationale (SPEC §10):
+#   - No `factory` partition: we boot straight into an OTA slot so both A and B
+#     are updatable. otadata selects the active slot and drives rollback.
+#   - Two equal app slots (ota_0 / ota_1) at ~1.5 MB each — comfortable for an
+#     ESP-IDF monolithic app with mbedTLS + libsodium + cJSON.
+#   - nvs: device identity / TUF metadata / install state (encrypted NVS later).
+#
+# App (ota_*) partitions must be aligned to 0x10000 (64 KB).
+#
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x6000,
+otadata,    data, ota,     0xf000,   0x2000,
+phy_init,   data, phy,     0x11000,  0x1000,
+ota_0,      app,  ota_0,   0x20000,  0x180000,
+ota_1,      app,  ota_1,   0x1a0000, 0x180000,
+# End of ota_1: 0x320000 — leaves ~0xE0000 (896 KB) headroom under 0x400000 (4 MB).

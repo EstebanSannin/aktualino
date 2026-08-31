@@ -1,0 +1,82 @@
+# Aktualino — common sdkconfig defaults (target-agnostic).
+#
+# Target-specific bits (flash size, PSRAM symbol, custom partition CSV) live in
+# sdkconfig.defaults.esp32 / sdkconfig.defaults.esp32s3, which ESP-IDF applies
+# on top of this file automatically for the active target.
+#
+# SAFETY (Phase 0): this file MUST NOT enable any eFuse-burning feature.
+#   - Flash encryption: OFF (burns eFuses, permanent) — do not enable in Phase 0.
+#   - Secure Boot v2:   OFF (burns eFuses, permanent) — do not enable in Phase 0.
+#   - Anti-rollback:    OFF (burns the secure_version eFuse on first boot of a
+#                        signed image) — left as a clearly-commented toggle below.
+# Only CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE is on; it burns nothing.
+
+#
+# --- Partition table (custom A/B, filename set per-target) ---
+#
+CONFIG_PARTITION_TABLE_CUSTOM=y
+# CONFIG_PARTITION_TABLE_CUSTOM_FILENAME is set in the per-target overlay.
+
+#
+# --- OTA / rollback (SPEC §10) ---
+#
+# App rollback: on a freshly-flashed OTA image the app boots pending-verify and
+# must call esp_ota_mark_app_valid_cancel_rollback(); otherwise the bootloader
+# reverts to the previous slot on the next reset. Burns nothing.
+CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# --- Anti-rollback (Uptane secure_version) — PERMANENT, keep OFF in Phase 0 ---
+# Enabling this burns the secure_version into an eFuse the first time a signed
+# image boots and can PERMANENTLY brick downgrade paths. Do NOT enable until the
+# hardening phase (SPEC §10, Phase 4). Toggle intentionally left commented:
+# CONFIG_BOOTLOADER_APP_ANTI_ROLLBACK=y
+# CONFIG_BOOTLOADER_APP_SECURE_VERSION=0
+# CONFIG_BOOTLOADER_APP_SECURE_VERSION_SIZE_EFUSE_FIELD=32
+
+#
+# --- TLS / mbedTLS (SPEC §8, §11) ---
+#
+# We terminate TLS 1.2 mutual-auth to the gateway with the pinned server CA
+# delivered at provisioning. The certificate bundle (public Mozilla roots) is
+# ALSO compiled in: Torizon Cloud serves binary targets as a 302 redirect to
+# object storage (`*.s3.<region>.amazonaws.com`, SPEC §7.4), whose public CA is
+# not the pinned gateway CA. The redirect leg validates against the bundle; the
+# downloaded bytes are still sha256+length verified against the two-repo target,
+# so transport trust on that leg is defence-in-depth, not the integrity anchor.
+# FULL bundle so the Amazon Root CA that signs the S3 endpoint is present.
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_2=y
+CONFIG_MBEDTLS_SSL_MAX_CONTENT_LEN=16384
+CONFIG_MBEDTLS_HARDWARE_AES=y
+CONFIG_MBEDTLS_HARDWARE_SHA=y
+# Elliptic curves for the EC P-256 mTLS client cert (SPEC §8).
+CONFIG_MBEDTLS_ECP_DP_SECP256R1_ENABLED=y
+# RSASSA-PSS is the secondary metadata-verify path (SPEC §8).
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_3=n
+
+#
+# --- HTTP(S) client for streaming target download (SPEC §7.4) ---
+#
+CONFIG_ESP_TLS_USING_MBEDTLS=y
+CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=y
+
+#
+# --- Logging (structured, readable during bring-up) ---
+#
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+CONFIG_LOG_MAXIMUM_LEVEL_DEBUG=y
+CONFIG_LOG_COLORS=y
+CONFIG_LOG_TIMESTAMP_SOURCE_RTOS=y
+
+#
+# --- FreeRTOS / task stack headroom for TLS + OTA ---
+#
+# The OTA runs in app_main; the mbedTLS handshake + esp_https_ota need more
+# stack than the 3.5 KB default, so give the main task comfortable headroom.
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=12288
+
+#
+# --- SNTP secure time (SPEC §9) ---
+#
+CONFIG_LWIP_SNTP_MAX_SERVERS=2

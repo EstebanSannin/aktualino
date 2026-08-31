@@ -1,0 +1,17 @@
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+I (1693) akt_main: state: <reset> -> BOOT
+I (1693) akt_main: ======================================================
+I (1693) akt_main:  Aktualino — tiny Uptane OTA client (Phase 4a: two-repo verify)
+I (1703) akt_main:  app: aktualino  version: 0.1.0
+I (1703) akt_main:  built: Aug 31 2026 11:53:31  idf: v5.4.4-1162-g42b44c7d9bc
+I (1713) akt_main:  sta mac: 84:0d:8e:e4:03:98
+I (1723) akt_main: ======================================================
+I (1743) akt_main: using baked Wi-Fi credentials (SSID "DroniX-TIM")
+W (1753) akt_main: unprovisioned + no usable Wi-Fi (forced by AKT_PORTAL_TEST) — starting SoftAP setup portal
+W (1983) akt_portal: ==================================================
+I (1983) akt_portal: captive DNS up on :53 -> 192.168.4.1
+W (1983) akt_portal:  SETUP PORTAL UP — join open Wi-Fi "aktualino-e40398"
+W (1993) akt_portal:  then open http://192.168.4.1/ (captive page auto-opens)
+W (2003) akt_portal: ==================================================
+W (2013) akt_main: PORTAL_TEST_STA: joining baked Wi-Fi "DroniX-TIM" for LAN test access
+I (3123) akt_portal: STA got IP: 192.168.1.127

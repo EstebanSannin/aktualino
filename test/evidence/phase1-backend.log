@@ -1,0 +1,56 @@
+Phase 1 — self-hosted OTA backend confirmation (queried from m920x)
+Date: 2026-08-31   Device uuid: 33361d56-c304-4053-9409-74eebeaf1a82   ECU serial: aktualinoespieaniooeadji   hardwareId: aktualino-esp32
+
+ECU keyid (device-derived == director-derived) = cf628284a9b17962dc337038cfed03bd2037e67674e91863ebe15d02b49ae746
+keyid = sha256( 44-byte Ed25519 X.509 SubjectPublicKeyInfo DER ), hex — verified locally against the registered public key.
+
+=== GET /api/device-registry/devices (our device present) ===
+{
+  "namespace": "default",
+  "uuid": "33361d56-c304-4053-9409-74eebeaf1a82",
+  "deviceName": "aktualino-esp32-e40398",
+  "deviceId": "aktualino-esp32-e40398",
+  "deviceType": "Other",
+  "lastSeen": null,
+  "createdAt": "2026-08-31T03:02:08Z",
+  "activatedAt": null,
+  "deviceStatus": "NotSeen",
+  "notes": null,
+  "hibernated": false,
+  "mqttLastSeen": null,
+  "mqttStatus": "NotSeen",
+  "attributes": {}
+}
+
+=== GET /api/director/admin/devices?primaryHardwareId=aktualino-esp32 ===
+{
+    "values": [
+        {
+            "id": "33361d56-c304-4053-9409-74eebeaf1a82",
+            "primaryEcu": "aktualinoespieaniooeadji",
+            "createdAt": "2026-08-31T03:02:10Z"
+        }
+    ],
+    "total": 1,
+    "offset": 0,
+    "limit": 50
+}
+
+=== GET /api/director/admin/devices/{uuid}/ecus (installed image from our V3 manifest) ===
+[
+    {
+        "id": "aktualinoespieaniooeadji",
+        "hardwareId": "aktualino-esp32",
+        "primary": true,
+        "image": {
+            "filepath": "aktualino-esp32-0.1.0",
+            "size": 1572864,
+            "hash": {
+                "sha256": "ae35936073a81e15c7806aff79d9d25590c81f099bf48e68aa87cb30a07b623b"
+            }
+        }
+    }
+]
+
+=== GET /api/director/admin/devices/{uuid}/ecus/{ecu}/public_key (registered ECU key) ===
+{"keyval":{"public":"8a44a7dda059af0cc919423857e96abc3e3bf32c1f75d25899f92d87ab336fc8"},"keytype":"ED25519"}

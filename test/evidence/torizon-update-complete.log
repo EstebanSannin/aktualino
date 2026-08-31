@@ -1,0 +1,256 @@
+Torizon Cloud — full cloud-driven update COMPLETED on real hardware (0.1.0 -> 0.2.0)
+====================================================================================
+Date       : 2026-08-31
+Device     : aktualino-esp32-85d66f  uuid 5c2813a6-9a0b-4653-96aa-851518d71aba  hwid aktualino-esp32
+Board      : classic ESP32 (ESP32-D0WD) on m920x /dev/ttyUSB0, WiFi DroniX-TIM
+Gateway    : https://dgw.torizon.io   (mTLS: per-device client.pem + pkey.pem, pinned root.crt)
+Assignment : Platform API v2  POST /api/v2beta/updates
+             body {"packageIds":["aktualino-esp32-0.2.0"],"devices":["5c2813a6-...-851518d71aba"]}
+             -> 201 ; updateId 01a05769-a03a-7779-84fb-c60546ae8538
+             correlation id on device: urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538
+Target     : aktualino-esp32-0.2.0  sha256 1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca  len 1194432
+Metadata   : RSASSA-PSS-SHA256 / RSA-2048 (Director + Image repo), verified on-device.
+Key path   : Torizon serves the binary target as HTTP 302 -> presigned AWS S3
+             (tzn-prod-reposerver.s3.dualstack.eu-central-1.amazonaws.com). The device now
+             FOLLOWS the redirect on a fresh bundle-CA leg (public Amazon root), streams the
+             1194432 bytes, and sha256+length verifies them against the two-repo target.
+
+Serial capture (ANSI stripped) of the successful run:
+------------------------------------------------------------------------------------
+I (10462) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (10522) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 10 >= stored 9) — persisted
+I (12522) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (12572) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 10 >= stored 9) — persisted
+I (14582) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=563)
+I (14632) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 10 >= stored 10) — persisted
+I (14632) akt_core: no update assigned — up to date (no target for aktualino-esp32)
+I (14642) akt_main: poll #1 OK — root=v6 timestamp=v10 snapshot=v10 targets=v10
+I (14642) akt_main: ==> no update assigned — up to date
+I (14732) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (830 bytes)
+I (16922) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (16932) akt_prov: manifest ACCEPTED: HTTP 200
+I (16932) akt_main: manifest re-report: ACCEPTED
+I (46942) akt_main: ======== Director poll #2 at 2026-08-31T10:42:35Z ========
+I (49122) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (49132) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (51132) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (51182) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 10 >= stored 10) — persisted
+I (53192) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (53242) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 10 >= stored 10) — persisted
+I (54442) wifi:<ba-add>idx:1 (ifx:0, a4:91:b1:4c:7f:3b), tid:3, ssn:1, winSize:64
+I (55382) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=986)
+I (55432) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 10) — persisted
+W (55432) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1194432 sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538)
+I (55452) akt_main: poll #2 OK — root=v6 timestamp=v10 snapshot=v10 targets=v11
+W (55462) akt_main: state: POLL_DIRECTOR -> VERIFY_METADATA (cross-repo)
+W (55462) akt_main: UPDATE ASSIGNED: aktualino-esp32-0.2.0 (len=1194432 sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca) — cross-verifying Image repo, then downloading
+I (57542) akt_net: GET https://dgw.torizon.io/repo/root.json -> HTTP 200 (content-length=3282)
+I (57552) akt_core: Image root walk: root up to date at v11 (no rotation)
+I (59572) akt_net: GET https://dgw.torizon.io/repo/timestamp.json -> HTTP 200 (content-length=695)
+I (59612) akt_core: Image timestamp: VERIFY PASS (signature threshold met, expiry OK, version 754 >= stored 754) — persisted
+I (61642) akt_net: GET https://dgw.torizon.io/repo/snapshot.json -> HTTP 200 (content-length=2085)
+I (61682) akt_core: Image snapshot : VERIFY PASS (signature threshold met, expiry OK, version 751 >= stored 751) — persisted
+I (63772) akt_net: GET https://dgw.torizon.io/repo/targets.json -> HTTP 200 (content-length=20918)
+I (63902) akt_core: Image targets  : VERIFY PASS (signature threshold met, expiry OK, version 376 >= stored 376) — persisted
+W (63902) akt_core: Image repo VERIFIED: roles ok (root=v11 ts=v754 snap=v751 targets=v376) + meta-hash chain ts->snap->targets over raw served bytes PASS
+W (63922) akt_core: CROSS-REPO MATCH PASS: aktualino-esp32-0.2.0 (sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca len=1194432) is signed by BOTH the Director and the Image repo — install allowed
+W (63942) akt_core: DOWNLOAD: GET https://dgw.torizon.io/repo/targets/aktualino-esp32-0.2.0 (expect len=1194432 sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca)
+I (63952) akt_ota: OTA target slot: ota_1 @ 0x001a0000 (size 0x00180000)
+I (69022) akt_net: GET https://dgw.torizon.io/repo/targets/aktualino-esp32-0.2.0 -> HTTP 302 (content-length=0)
+I (69032) akt_net: following HTTP 302 redirect to https://tzn-prod-reposerver.s3.dualstack.eu-central-1.amazon… (bundle-CA leg)
+I (69522) esp-x509-crt-bundle: Certificate validated
+I (70412) akt_net: GET (redirect) https://tzn-prod-reposerver.s3.dualstack.eu-central-1.amazonaws.com/7f56… -> HTTP 200 (content-length=1194432)
+I (81242) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=34414h (214036) map
+I (81332) esp_image: segment 1: paddr=001d443c vaddr=3ffb0000 size=04e90h ( 20112) 
+I (81352) esp_image: segment 2: paddr=001d92d4 vaddr=40080000 size=06d44h ( 27972) 
+I (81372) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=cd658h (841304) map
+I (81682) esp_image: segment 4: paddr=002ad680 vaddr=40086d44 size=162f0h ( 90864) 
+I (81722) esp_image: segment 5: paddr=002c3978 vaddr=50000000 size=0001ch (    28) 
+I (81732) akt_ota: OTA write complete: 1194432 bytes hashed
+W (81732) akt_core: install: VERIFIED sha256 + length OK (1194432 bytes)
+I (81752) akt_store: pending update staged: aktualino-esp32-0.2.0 (cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538)
+I (81752) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=34414h (214036) map
+I (81842) esp_image: segment 1: paddr=001d443c vaddr=3ffb0000 size=04e90h ( 20112) 
+I (81862) esp_image: segment 2: paddr=001d92d4 vaddr=40080000 size=06d44h ( 27972) 
+I (81892) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=cd658h (841304) map
+I (82192) esp_image: segment 4: paddr=002ad680 vaddr=40086d44 size=162f0h ( 90864) 
+I (82232) esp_image: segment 5: paddr=002c3978 vaddr=50000000 size=0001ch (    28) 
+I (82322) akt_ota: boot partition set to ota_1; reboot to activate
+W (82322) akt_core: install: boot slot set — reboot to activate aktualino-esp32-0.2.0
+W (82322) akt_main: state: VERIFY_METADATA -> DOWNLOAD -> INSTALL -> REBOOT
+W (82332) akt_main: both repos agree + image staged + verified — rebooting into the new image
+I (83342) wifi:state: run -> init (0x0)
+I (83352) wifi:pm stop, total sleep time: 57268972 us / 81317501 us
+
+I (83352) wifi:<ba-del>idx:0, tid:0
+I (83352) wifi:<ba-del>idx:1, tid:3
+W (83352) akt_main: WiFi disconnected; retry 1/10
+I (83392) wifi:flush txq
+I (83392) wifi:stop sw txq
+I (83392) wifi:lmac stop hw txq
+ets Jun  8 2016 00:22:57
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6280
+load:0x40078000,len:15816
+load:0x40080400,len:4
+load:0x40080404,len:3920
+entry 0x40080648
+I (29) boot: ESP-IDF v5.4.4-1162-g42b44c7d9bc 2nd stage bootloader
+I (29) boot: compile time Aug 31 2026 10:41:06
+I (29) boot: Multicore bootloader
+I (32) boot: chip revision: v1.0
+I (35) boot.esp32: SPI Speed      : 40MHz
+I (39) boot.esp32: SPI Mode       : DIO
+I (42) boot.esp32: SPI Flash Size : 4MB
+I (46) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (53) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (66) boot:  1 otadata          OTA data         01 00 0000f000 00002000
+I (72) boot:  2 phy_init         RF data          01 01 00011000 00001000
+I (79) boot:  3 ota_0            OTA app          00 10 00020000 00180000
+I (85) boot:  4 ota_1            OTA app          00 11 001a0000 00180000
+I (92) boot: End of partition table
+I (141) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=34414h (214036) map
+I (215) esp_image: segment 1: paddr=001d443c vaddr=3ffb0000 size=04e90h ( 20112) load
+I (222) esp_image: segment 2: paddr=001d92d4 vaddr=40080000 size=06d44h ( 27972) load
+I (234) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=cd658h (841304) map
+I (521) esp_image: segment 4: paddr=002ad680 vaddr=40086d44 size=162f0h ( 90864) load
+I (556) esp_image: segment 5: paddr=002c3978 vaddr=50000000 size=0001ch (    28) load
+I (571) boot: Loaded app from partition at offset 0x1a0000
+I (571) boot: Disabling RNG early entropy source...
+I (581) quad_psram: This chip is ESP32-D0WD
+I (583) esp_psram: Found 8MB PSRAM device
+I (583) esp_psram: Speed: 40MHz
+I (585) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.
+W (592) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped
+I (602) cpu_start: Multicore app
+I (1508) esp_psram: SPI SRAM memory test OK
+I (1516) cpu_start: GPIO 3 and 1 are used as console UART I/O pins
+I (1516) cpu_start: Pro cpu start user code
+I (1517) cpu_start: cpu freq: 160000000 Hz
+I (1521) app_init: Application information:
+I (1526) app_init: Project name:     aktualino
+I (1531) app_init: App version:      0.2.0
+I (1536) app_init: Compile time:     Aug 31 2026 09:41:57
+I (1542) app_init: ELF file SHA256:  986c8906e...
+I (1548) app_init: ESP-IDF:          v5.4.4-1162-g42b44c7d9bc
+I (1554) efuse_init: Min chip rev:     v0.0
+I (1559) efuse_init: Max chip rev:     v3.99 
+I (1564) efuse_init: Chip rev:         v1.0
+I (1569) heap_init: Initializing. RAM available for dynamic allocation:
+I (1576) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (1582) heap_init: At 3FFB9968 len 00026698 (153 KiB): DRAM
+I (1589) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (1595) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (1602) heap_init: At 4009D034 len 00002FCC (11 KiB): IRAM
+I (1608) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator
+I (1617) spi_flash: detected chip: generic
+I (1620) spi_flash: flash io: dio
+I (1625) main_task: Started on CPU0
+I (1635) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1635) main_task: Calling app_main()
+I (1685) akt_main: state: <reset> -> BOOT
+I (1685) akt_main: ======================================================
+I (1685) akt_main:  Aktualino — tiny Uptane OTA client (Phase 4a: two-repo verify)
+I (1695) akt_main:  app: aktualino  version: 0.2.0
+I (1695) akt_main:  built: Aug 31 2026 09:41:57  idf: v5.4.4-1162-g42b44c7d9bc
+I (1705) akt_main:  sta mac: 84:0d:8e:e4:03:98
+I (1715) akt_main: ======================================================
+I (1735) akt_ota: running partition: ota_1 @ 0x001a0000 subtype 0x11  ota-state=PENDING_VERIFY
+I (1745) wifi:wifi driver task: 3ffcbd6c, prio:23, stack:6656, core=0
+I (1755) wifi:wifi firmware version: 46c5c26
+I (1755) wifi:wifi certification version: v7.0
+I (1755) wifi:config NVS flash: enabled
+I (1755) wifi:config nano formatting: disabled
+I (1765) wifi:Init data frame dynamic rx buffer num: 32
+I (1765) wifi:Init static rx mgmt buffer num: 5
+I (1775) wifi:Init management short buffer num: 32
+I (1775) wifi:Init dynamic tx buffer num: 32
+I (1775) wifi:Init static rx buffer size: 1600
+I (1785) wifi:Init static rx buffer num: 10
+I (1785) wifi:Init dynamic rx buffer num: 32
+I (1795) wifi_init: rx ba win: 6
+I (1795) wifi_init: accept mbox: 6
+I (1795) wifi_init: tcpip mbox: 32
+I (1805) wifi_init: udp mbox: 6
+I (1805) wifi_init: tcp mbox: 6
+I (1815) wifi_init: tcp tx win: 5760
+I (1815) wifi_init: tcp rx win: 5760
+I (1815) wifi_init: tcp mss: 1440
+I (1825) wifi_init: WiFi IRAM OP enabled
+I (1825) wifi_init: WiFi RX IRAM OP enabled
+I (1835) akt_main: connecting to SSID "DroniX-TIM"...
+I (1835) phy_init: phy_version 4863,a3a4459,Oct 28 2025,14:30:06
+I (1915) wifi:mode : sta (84:0d:8e:e4:03:98)
+I (1915) wifi:enable tsf
+I (1935) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0
+I (1935) wifi:state: init -> auth (0xb0)
+I (1945) wifi:state: auth -> assoc (0x0)
+I (1955) wifi:state: assoc -> run (0x10)
+I (1995) wifi:connected with DroniX-TIM, aid = 33, channel 11, BW20, bssid = a4:91:b1:4c:7f:3b
+I (1995) wifi:security: WPA2-PSK, phy: bgn, rssi: -64, cipher(pairwise:0x3, group:0x3), pmf:0
+I (2005) wifi:pm start, type: 1
+
+I (2005) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (2055) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (3025) esp_netif_handlers: sta ip: 192.168.1.127, mask: 255.255.255.0, gw: 192.168.1.1
+I (3025) akt_main: got IP: 192.168.1.127
+I (3025) akt_core: state: BOOT -> TIME_SYNC
+I (3025) akt_time: SNTP started (server=pool.ntp.org), waiting up to 30000 ms for time
+I (3035) akt_time: time synced: 2026-08-31T10:43:15Z
+I (3045) akt_core: state: TIME_SYNC -> CONFIRM
+W (3055) akt_main: pending update present: aktualino-esp32-0.2.0 (cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538 pending_verify=1)
+W (3065) akt_main: ==================================================
+W (3065) akt_main:  UPDATE BOOTED: now running 0.2.0 — confirming + reporting
+W (3075) akt_main: ==================================================
+I (3155) akt_ota: running image marked valid; rollback cancelled
+W (3165) akt_prov: reporting installed target aktualino-esp32-0.2.0 (SUCCESS) cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538
+I (3235) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (1256 bytes, with installation_report)
+I (3265) wifi:<ba-add>idx:0 (ifx:0, a4:91:b1:4c:7f:3b), tid:0, ssn:1, winSize:64
+I (5025) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (5035) akt_prov: manifest ACCEPTED: HTTP 200
+I (5035) akt_store: running image recorded: aktualino-esp32-0.2.0 (len=1194432)
+W (5045) akt_main: UPDATE COMPLETE — success manifest ACCEPTED, running-image recorded, pending cleared
+I (5055) akt_core: state: CONFIRM -> PROVISION
+I (5055) akt_main: already provisioned — device is registered; idling
+I (5065) akt_core: state: PROVISION -> POLL_DIRECTOR
+I (5125) akt_core: trust anchor: using persisted Director root v6 (self-verify OK)
+I (5175) akt_core: trust anchor: using persisted Image root v11 (self-verify OK)
+I (5175) akt_main: ======== Director poll #1 at 2026-08-31T10:43:17Z ========
+I (6895) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (6905) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (8535) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (8585) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 10) — persisted
+I (10195) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (10255) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 10) — persisted
+I (11885) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=986)
+I (11925) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 11) — persisted
+W (11935) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1194432 sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538)
+I (11955) akt_main: poll #1 OK — root=v6 timestamp=v11 snapshot=v11 targets=v11
+I (11955) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)
+I (12055) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (830 bytes)
+I (13785) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (13795) akt_prov: manifest ACCEPTED: HTTP 200
+I (13795) akt_main: manifest re-report: ACCEPTED
+I (43795) akt_main: ======== Director poll #2 at 2026-08-31T10:43:56Z ========
+I (45455) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (45465) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (47055) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (47105) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 11) — persisted
+I (48695) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (48735) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 11) — persisted
+I (50345) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=986)
+I (50385) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 11) — persisted
+W (50395) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1194432 sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca cid=urn:tdx-ota:update:01a05769-a03a-7779-84fb-c60546ae8538)
+I (50415) akt_main: poll #2 OK — root=v6 timestamp=v11 snapshot=v11 targets=v11
+I (50425) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)
+I (80425) akt_main: ======== Director poll #3 at 2026-08-31T10:44:32Z ========
+I (82105) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (82115) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (83725) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (83765) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 11 >= stored 11) — persisted

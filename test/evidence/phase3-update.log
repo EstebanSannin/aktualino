@@ -1,0 +1,361 @@
+ets Jun  8 2016 00:22:57
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6280
+load:0x40078000,len:15816
+load:0x40080400,len:4
+load:0x40080404,len:3920
+entry 0x40080648
+I (29) boot: ESP-IDF v5.4.4-1162-g42b44c7d9bc 2nd stage bootloader
+I (29) boot: compile time Aug 31 2026 03:52:02
+I (29) boot: Multicore bootloader
+I (32) boot: chip revision: v1.0
+I (35) boot.esp32: SPI Speed      : 40MHz
+I (38) boot.esp32: SPI Mode       : DIO
+I (42) boot.esp32: SPI Flash Size : 4MB
+I (46) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (53) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (66) boot:  1 otadata          OTA data         01 00 0000f000 00002000
+I (72) boot:  2 phy_init         RF data          01 01 00011000 00001000
+I (79) boot:  3 ota_0            OTA app          00 10 00020000 00180000
+I (85) boot:  4 ota_1            OTA app          00 11 001a0000 00180000
+I (92) boot: End of partition table
+I (95) esp_image: segment 0: paddr=00020020 vaddr=3f400020 size=33854h (211028) map
+I (174) esp_image: segment 1: paddr=0005387c vaddr=3ffb0000 size=04e90h ( 20112) load
+I (182) esp_image: segment 2: paddr=00058714 vaddr=40080000 size=07904h ( 30980) load
+I (194) esp_image: segment 3: paddr=00060020 vaddr=400d0020 size=ccec8h (839368) map
+I (481) esp_image: segment 4: paddr=0012cef0 vaddr=40087904 size=15730h ( 87856) load
+I (516) esp_image: segment 5: paddr=00142628 vaddr=50000000 size=0001ch (    28) load
+I (530) boot: Loaded app from partition at offset 0x20000
+I (530) boot: Disabling RNG early entropy source...
+[0;32mI (540) quad_psram: This chip is ESP32-D0WD[0m
+[0;32mI (542) esp_psram: Found 8MB PSRAM device[0m
+[0;32mI (542) esp_psram: Speed: 40MHz[0m
+[0;32mI (544) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.[0m
+[0;33mW (551) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped[0m
+[0;32mI (561) cpu_start: Multicore app[0m
+[0;32mI (1467) esp_psram: SPI SRAM memory test OK[0m
+[0;32mI (1475) cpu_start: GPIO 3 and 1 are used as console UART I/O pins[0m
+[0;32mI (1475) cpu_start: Pro cpu start user code[0m
+[0;32mI (1476) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (1480) app_init: Application information:[0m
+[0;32mI (1485) app_init: Project name:     aktualino[0m
+[0;32mI (1490) app_init: App version:      0.1.0[0m
+[0;32mI (1495) app_init: Compile time:     Aug 31 2026 03:51:59[0m
+[0;32mI (1501) app_init: ELF file SHA256:  f91e4c8fb...[0m
+[0;32mI (1507) app_init: ESP-IDF:          v5.4.4-1162-g42b44c7d9bc[0m
+[0;32mI (1513) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (1518) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (1523) efuse_init: Chip rev:         v1.0[0m
+[0;32mI (1528) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (1535) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (1541) heap_init: At 3FFB9968 len 00026698 (153 KiB): DRAM[0m
+[0;32mI (1548) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (1554) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (1561) heap_init: At 4009D034 len 00002FCC (11 KiB): IRAM[0m
+[0;32mI (1567) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator[0m
+[0;32mI (1576) spi_flash: detected chip: generic[0m
+[0;32mI (1579) spi_flash: flash io: dio[0m
+[0;32mI (1585) main_task: Started on CPU0[0m
+[0;32mI (1595) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations[0m
+[0;32mI (1595) main_task: Calling app_main()[0m
+[0;32mI (1645) akt_main: state: <reset> -> BOOT[0m
+[0;32mI (1645) akt_main: ======================================================[0m
+[0;32mI (1645) akt_main:  Aktualino — tiny Uptane OTA client (Phase 3: cloud update loop)[0m
+[0;32mI (1655) akt_main:  app: aktualino  version: 0.1.0[0m
+[0;32mI (1655) akt_main:  built: Aug 31 2026 03:51:59  idf: v5.4.4-1162-g42b44c7d9bc[0m
+[0;32mI (1665) akt_main:  sta mac: 84:0d:8e:e4:03:98[0m
+[0;32mI (1665) akt_main: ======================================================[0m
+[0;32mI (1685) akt_ota: running partition: ota_0 @ 0x00020000 subtype 0x10  ota-state=VALID[0m
+I (1705) wifi:wifi driver task: 3ffcbc64, prio:23, stack:6656, core=0
+I (1715) wifi:wifi firmware version: 46c5c26
+I (1715) wifi:wifi certification version: v7.0
+I (1715) wifi:config NVS flash: enabled
+I (1715) wifi:config nano formatting: disabled
+I (1725) wifi:Init data frame dynamic rx buffer num: 32
+I (1725) wifi:Init static rx mgmt buffer num: 5
+I (1725) wifi:Init management short buffer num: 32
+I (1735) wifi:Init dynamic tx buffer num: 32
+I (1735) wifi:Init static rx buffer size: 1600
+I (1745) wifi:Init static rx buffer num: 10
+I (1745) wifi:Init dynamic rx buffer num: 32
+[0;32mI (1755) wifi_init: rx ba win: 6[0m
+[0;32mI (1755) wifi_init: accept mbox: 6[0m
+[0;32mI (1755) wifi_init: tcpip mbox: 32[0m
+[0;32mI (1765) wifi_init: udp mbox: 6[0m
+[0;32mI (1765) wifi_init: tcp mbox: 6[0m
+[0;32mI (1775) wifi_init: tcp tx win: 5760[0m
+[0;32mI (1775) wifi_init: tcp rx win: 5760[0m
+[0;32mI (1775) wifi_init: tcp mss: 1440[0m
+[0;32mI (1785) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (1785) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (1795) akt_main: connecting to SSID "DroniX-TIM"...[0m
+[0;32mI (1795) phy_init: phy_version 4863,a3a4459,Oct 28 2025,14:30:06[0m
+I (1875) wifi:mode : sta (84:0d:8e:e4:03:98)
+I (1875) wifi:enable tsf
+I (1895) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0
+I (1895) wifi:state: init -> auth (0xb0)
+I (1905) wifi:state: auth -> assoc (0x0)
+I (1915) wifi:state: assoc -> run (0x10)
+I (1955) wifi:connected with DroniX-TIM, aid = 23, channel 11, BW20, bssid = a4:91:b1:4c:7f:3b
+I (1955) wifi:security: WPA2-PSK, phy: bgn, rssi: -62, cipher(pairwise:0x3, group:0x3), pmf:0
+I (1965) wifi:pm start, type: 1
+
+I (1965) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (1975) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (3095) wifi:<ba-add>idx:0 (ifx:0, a4:91:b1:4c:7f:3b), tid:0, ssn:1, winSize:64
+[0;32mI (10495) esp_netif_handlers: sta ip: 192.168.1.127, mask: 255.255.255.0, gw: 192.168.1.1[0m
+[0;32mI (10495) akt_main: got IP: 192.168.1.127[0m
+[0;32mI (10495) akt_core: state: BOOT -> TIME_SYNC[0m
+[0;32mI (10495) akt_time: SNTP started (server=pool.ntp.org), waiting up to 30000 ms for time[0m
+[0;32mI (14105) akt_time: time synced: 2026-08-31T04:02:02Z[0m
+[0;32mI (14105) akt_core: state: TIME_SYNC -> CONFIRM[0m
+[0;32mI (14105) akt_core: state: CONFIRM -> PROVISION[0m
+[0;32mI (14105) akt_main: already provisioned — device is registered; idling[0m
+[0;32mI (14115) akt_core: state: PROVISION -> POLL_DIRECTOR[0m
+[0;32mI (14125) akt_core: trust anchor: using persisted Director root (version 1)[0m
+[0;32mI (14125) akt_main: ======== Director poll #1 at 2026-08-31T04:02:02Z ========[0m
+[0;32mI (15675) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (15685) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (17185) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (17265) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 3) — persisted[0m
+[0;32mI (18765) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (18845) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 3) — persisted[0m
+[0;32mI (20345) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (20415) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (20415) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (20435) akt_main: poll #1 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;33mW (20445) akt_main: state: POLL_DIRECTOR -> DOWNLOAD[0m
+[0;33mW (20455) akt_main: UPDATE ASSIGNED: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27) — downloading + installing[0m
+[0;33mW (20475) akt_core: DOWNLOAD: GET https://192.168.1.246:30443/repo/targets/aktualino-esp32-0.2.0 (expect len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27)[0m
+[0;32mI (20485) akt_ota: OTA target slot: ota_1 @ 0x001a0000 (size 0x00180000)[0m
+[0;32mI (25065) akt_net: GET https://192.168.1.246:30443/repo/targets/aktualino-esp32-0.2.0 -> HTTP 200 (content-length=1189488)[0m
+[0;32mI (32445) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=33854h (211028) map[0m
+[0;32mI (32535) esp_image: segment 1: paddr=001d387c vaddr=3ffb0000 size=04e90h ( 20112) [0m
+[0;32mI (32555) esp_image: segment 2: paddr=001d8714 vaddr=40080000 size=07904h ( 30980) [0m
+[0;32mI (32575) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=ccec8h (839368) map[0m
+[0;32mI (32875) esp_image: segment 4: paddr=002acef0 vaddr=40087904 size=15730h ( 87856) [0m
+[0;32mI (32915) esp_image: segment 5: paddr=002c2628 vaddr=50000000 size=0001ch (    28) [0m
+[0;32mI (32925) akt_ota: OTA write complete: 1189488 bytes hashed[0m
+[0;33mW (32925) akt_core: install: VERIFIED sha256 + length OK (1189488 bytes)[0m
+[0;32mI (32945) akt_store: pending update staged: aktualino-esp32-0.2.0 (cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (32945) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=33854h (211028) map[0m
+[0;32mI (33035) esp_image: segment 1: paddr=001d387c vaddr=3ffb0000 size=04e90h ( 20112) [0m
+[0;32mI (33055) esp_image: segment 2: paddr=001d8714 vaddr=40080000 size=07904h ( 30980) [0m
+[0;32mI (33075) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=ccec8h (839368) map[0m
+[0;32mI (33385) esp_image: segment 4: paddr=002acef0 vaddr=40087904 size=15730h ( 87856) [0m
+[0;32mI (33425) esp_image: segment 5: paddr=002c2628 vaddr=50000000 size=0001ch (    28) [0m
+[0;32mI (33505) akt_ota: boot partition set to ota_1; reboot to activate[0m
+[0;33mW (33505) akt_core: install: boot slot set — reboot to activate aktualino-esp32-0.2.0[0m
+[0;33mW (33505) akt_main: state: DOWNLOAD -> INSTALL -> REBOOT[0m
+[0;33mW (33515) akt_main: update staged + verified — rebooting into the new image[0m
+I (34515) wifi:state: run -> init (0x0)
+I (34525) wifi:pm stop, total sleep time: 20650512 us / 32557595 us
+
+I (34525) wifi:<ba-del>idx:0, tid:0
+[0;33mW (34525) akt_main: WiFi disconnected; retry 1/10[0m
+I (34565) wifi:flush txq
+I (34565) wifi:stop sw txq
+I (34565) wifi:lmac stop hw txq
+ets Jun  8 2016 00:22:57
+
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6280
+load:0x40078000,len:15816
+load:0x40080400,len:4
+load:0x40080404,len:3920
+entry 0x40080648
+I (29) boot: ESP-IDF v5.4.4-1162-g42b44c7d9bc 2nd stage bootloader
+I (29) boot: compile time Aug 31 2026 03:52:02
+I (29) boot: Multicore bootloader
+I (32) boot: chip revision: v1.0
+I (35) boot.esp32: SPI Speed      : 40MHz
+I (39) boot.esp32: SPI Mode       : DIO
+I (42) boot.esp32: SPI Flash Size : 4MB
+I (46) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (53) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (66) boot:  1 otadata          OTA data         01 00 0000f000 00002000
+I (72) boot:  2 phy_init         RF data          01 01 00011000 00001000
+I (79) boot:  3 ota_0            OTA app          00 10 00020000 00180000
+I (85) boot:  4 ota_1            OTA app          00 11 001a0000 00180000
+I (92) boot: End of partition table
+I (142) esp_image: segment 0: paddr=001a0020 vaddr=3f400020 size=33854h (211028) map
+I (214) esp_image: segment 1: paddr=001d387c vaddr=3ffb0000 size=04e90h ( 20112) load
+I (222) esp_image: segment 2: paddr=001d8714 vaddr=40080000 size=07904h ( 30980) load
+I (234) esp_image: segment 3: paddr=001e0020 vaddr=400d0020 size=ccec8h (839368) map
+I (521) esp_image: segment 4: paddr=002acef0 vaddr=40087904 size=15730h ( 87856) load
+I (555) esp_image: segment 5: paddr=002c2628 vaddr=50000000 size=0001ch (    28) load
+I (569) boot: Loaded app from partition at offset 0x1a0000
+I (569) boot: Disabling RNG early entropy source...
+[0;32mI (580) quad_psram: This chip is ESP32-D0WD[0m
+[0;32mI (582) esp_psram: Found 8MB PSRAM device[0m
+[0;32mI (582) esp_psram: Speed: 40MHz[0m
+[0;32mI (584) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.[0m
+[0;33mW (591) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped[0m
+[0;32mI (600) cpu_start: Multicore app[0m
+[0;32mI (1507) esp_psram: SPI SRAM memory test OK[0m
+[0;32mI (1515) cpu_start: GPIO 3 and 1 are used as console UART I/O pins[0m
+[0;32mI (1515) cpu_start: Pro cpu start user code[0m
+[0;32mI (1515) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (1520) app_init: Application information:[0m
+[0;32mI (1525) app_init: Project name:     aktualino[0m
+[0;32mI (1530) app_init: App version:      0.2.0[0m
+[0;32mI (1535) app_init: Compile time:     Aug 31 2026 03:52:45[0m
+[0;32mI (1541) app_init: ELF file SHA256:  3cf7fea90...[0m
+[0;32mI (1546) app_init: ESP-IDF:          v5.4.4-1162-g42b44c7d9bc[0m
+[0;32mI (1553) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (1558) efuse_init: Max chip rev:     v3.99 [0m
+[0;32mI (1563) efuse_init: Chip rev:         v1.0[0m
+[0;32mI (1568) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (1575) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM[0m
+[0;32mI (1581) heap_init: At 3FFB9968 len 00026698 (153 KiB): DRAM[0m
+[0;32mI (1587) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM[0m
+[0;32mI (1594) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM[0m
+[0;32mI (1600) heap_init: At 4009D034 len 00002FCC (11 KiB): IRAM[0m
+[0;32mI (1607) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator[0m
+[0;32mI (1616) spi_flash: detected chip: generic[0m
+[0;32mI (1619) spi_flash: flash io: dio[0m
+[0;32mI (1624) main_task: Started on CPU0[0m
+[0;32mI (1634) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations[0m
+[0;32mI (1634) main_task: Calling app_main()[0m
+[0;32mI (1684) akt_main: state: <reset> -> BOOT[0m
+[0;32mI (1684) akt_main: ======================================================[0m
+[0;32mI (1684) akt_main:  Aktualino — tiny Uptane OTA client (Phase 3: cloud update loop)[0m
+[0;32mI (1694) akt_main:  app: aktualino  version: 0.2.0[0m
+[0;32mI (1694) akt_main:  built: Aug 31 2026 03:52:45  idf: v5.4.4-1162-g42b44c7d9bc[0m
+[0;32mI (1704) akt_main:  sta mac: 84:0d:8e:e4:03:98[0m
+[0;32mI (1714) akt_main: ======================================================[0m
+[0;32mI (1724) akt_ota: running partition: ota_1 @ 0x001a0000 subtype 0x11  ota-state=PENDING_VERIFY[0m
+I (1744) wifi:wifi driver task: 3ffcbc64, prio:23, stack:6656, core=0
+I (1754) wifi:wifi firmware version: 46c5c26
+I (1754) wifi:wifi certification version: v7.0
+I (1754) wifi:config NVS flash: enabled
+I (1754) wifi:config nano formatting: disabled
+I (1764) wifi:Init data frame dynamic rx buffer num: 32
+I (1764) wifi:Init static rx mgmt buffer num: 5
+I (1764) wifi:Init management short buffer num: 32
+I (1774) wifi:Init dynamic tx buffer num: 32
+I (1774) wifi:Init static rx buffer size: 1600
+I (1784) wifi:Init static rx buffer num: 10
+I (1784) wifi:Init dynamic rx buffer num: 32
+[0;32mI (1794) wifi_init: rx ba win: 6[0m
+[0;32mI (1794) wifi_init: accept mbox: 6[0m
+[0;32mI (1794) wifi_init: tcpip mbox: 32[0m
+[0;32mI (1804) wifi_init: udp mbox: 6[0m
+[0;32mI (1804) wifi_init: tcp mbox: 6[0m
+[0;32mI (1814) wifi_init: tcp tx win: 5760[0m
+[0;32mI (1814) wifi_init: tcp rx win: 5760[0m
+[0;32mI (1814) wifi_init: tcp mss: 1440[0m
+[0;32mI (1824) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (1824) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;32mI (1834) akt_main: connecting to SSID "DroniX-TIM"...[0m
+[0;32mI (1834) phy_init: phy_version 4863,a3a4459,Oct 28 2025,14:30:06[0m
+I (1914) wifi:mode : sta (84:0d:8e:e4:03:98)
+I (1914) wifi:enable tsf
+I (1934) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0
+I (1934) wifi:state: init -> auth (0xb0)
+I (1944) wifi:state: auth -> assoc (0x0)
+I (1954) wifi:state: assoc -> run (0x10)
+I (1984) wifi:connected with DroniX-TIM, aid = 9, channel 11, BW20, bssid = a4:91:b1:4c:7f:3b
+I (1984) wifi:security: WPA2-PSK, phy: bgn, rssi: -62, cipher(pairwise:0x3, group:0x3), pmf:0
+I (1994) wifi:pm start, type: 1
+
+I (1994) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (2004) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (21054) wifi:<ba-add>idx:0 (ifx:0, a4:91:b1:4c:7f:3b), tid:3, ssn:1, winSize:64
+[0;32mI (22534) esp_netif_handlers: sta ip: 192.168.1.127, mask: 255.255.255.0, gw: 192.168.1.1[0m
+[0;32mI (22534) akt_main: got IP: 192.168.1.127[0m
+[0;32mI (22534) akt_core: state: BOOT -> TIME_SYNC[0m
+[0;32mI (22534) akt_time: SNTP started (server=pool.ntp.org), waiting up to 30000 ms for time[0m
+[0;32mI (22544) akt_time: time synced: 2026-08-31T04:02:45Z[0m
+[0;32mI (22554) akt_core: state: TIME_SYNC -> CONFIRM[0m
+[0;33mW (22564) akt_main: pending update present: aktualino-esp32-0.2.0 (cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95 pending_verify=1)[0m
+[0;33mW (22574) akt_main: ==================================================[0m
+[0;33mW (22574) akt_main:  UPDATE BOOTED: now running 0.2.0 — confirming + reporting[0m
+[0;33mW (22584) akt_main: ==================================================[0m
+[0;32mI (22664) akt_ota: running image marked valid; rollback cancelled[0m
+[0;33mW (22674) akt_prov: reporting installed target aktualino-esp32-0.2.0 (SUCCESS) cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95[0m
+[0;32mI (22754) akt_prov: manifest: PUT https://192.168.1.246:30443/director/manifest (1250 bytes, with installation_report)[0m
+I (22764) wifi:<ba-add>idx:1 (ifx:0, a4:91:b1:4c:7f:3b), tid:0, ssn:1, winSize:64
+[0;32mI (24354) akt_net: PUT https://192.168.1.246:30443/director/manifest -> HTTP 200 (content-length=2)[0m
+[0;32mI (24354) akt_prov: manifest ACCEPTED: HTTP 200[0m
+[0;32mI (24364) akt_store: running image recorded: aktualino-esp32-0.2.0 (len=1189488)[0m
+[0;33mW (24364) akt_main: UPDATE COMPLETE — success manifest ACCEPTED, running-image recorded, pending cleared[0m
+[0;32mI (24374) akt_core: state: CONFIRM -> PROVISION[0m
+[0;32mI (24374) akt_main: already provisioned — device is registered; idling[0m
+[0;32mI (24384) akt_core: state: PROVISION -> POLL_DIRECTOR[0m
+[0;32mI (24394) akt_core: trust anchor: using persisted Director root (version 1)[0m
+[0;32mI (24394) akt_main: ======== Director poll #1 at 2026-08-31T04:02:47Z ========[0m
+[0;32mI (25944) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (25954) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (27474) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (27544) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (29044) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (29124) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (30624) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (30694) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (30694) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (30714) akt_main: poll #1 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;32mI (30724) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)[0m
+[0;32mI (30814) akt_prov: manifest: PUT https://192.168.1.246:30443/director/manifest (827 bytes)[0m
+[0;32mI (32364) akt_net: PUT https://192.168.1.246:30443/director/manifest -> HTTP 200 (content-length=2)[0m
+[0;32mI (32374) akt_prov: manifest ACCEPTED: HTTP 200[0m
+[0;32mI (32374) akt_main: manifest re-report: ACCEPTED[0m
+[0;32mI (62374) akt_main: ======== Director poll #2 at 2026-08-31T04:03:25Z ========[0m
+[0;32mI (63914) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (63924) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (65424) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (65504) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (67004) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (67084) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (68584) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (68654) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (68654) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (68674) akt_main: poll #2 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;32mI (68684) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)[0m
+[0;32mI (98694) akt_main: ======== Director poll #3 at 2026-08-31T04:04:02Z ========[0m
+[0;32mI (100224) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (100234) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (101744) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (101814) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (103314) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (103384) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (104894) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (104964) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (104964) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (104984) akt_main: poll #3 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;32mI (104994) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)[0m
+[0;32mI (135004) akt_main: ======== Director poll #4 at 2026-08-31T04:04:38Z ========[0m
+[0;32mI (136534) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (136544) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (138084) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (138154) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (139654) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (139724) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (141234) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (141304) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (141304) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (141324) akt_main: poll #4 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;32mI (141334) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)[0m
+[0;32mI (171344) akt_main: ======== Director poll #5 at 2026-08-31T04:05:14Z ========[0m
+[0;32mI (172874) akt_net: GET https://192.168.1.246:30443/director/root.json -> HTTP 200 (content-length=1447)[0m
+[0;32mI (172884) akt_core: root walk: Director root up to date at v1 (no rotation)[0m
+[0;32mI (174384) akt_net: GET https://192.168.1.246:30443/director/timestamp.json -> HTTP 200 (content-length=424)[0m
+[0;32mI (174454) akt_core: timestamp: VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (175954) akt_net: GET https://192.168.1.246:30443/director/snapshot.json -> HTTP 200 (content-length=549)[0m
+[0;32mI (176024) akt_core: snapshot : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;32mI (177524) akt_net: GET https://192.168.1.246:30443/director/targets.json -> HTTP 200 (content-length=642)[0m
+[0;32mI (177594) akt_core: targets  : VERIFY PASS (ed25519 threshold met, expiry OK, version 4 >= stored 4) — persisted[0m
+[0;33mW (177594) akt_core: target ASSIGNED for aktualino-esp32: aktualino-esp32-0.2.0 (len=1189488 sha256=f0a52ba87756aa5d720231bc92c593714b02bcc8040b23bf5fcb56bef07e4f27 cid=urn:here-ota:mtu:01a055fa-ac7f-73af-86ee-e83c57b87f95)[0m
+[0;32mI (177614) akt_main: poll #5 OK — root=v1 timestamp=v4 snapshot=v4 targets=v4[0m
+[0;32mI (177624) akt_main: ==> assigned target already installed — up to date (idempotent, no re-update)[0m

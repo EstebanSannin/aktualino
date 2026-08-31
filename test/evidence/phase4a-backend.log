@@ -1,0 +1,20 @@
+=== Phase 4a backend cross-check (2026-08-31T04:38:05Z) ===
+device uuid: e3988c4d-f288-4e63-b449-7f686f02f625
+
+--- device-registry (deviceStatus + lastSeen) ---
+{"namespace":"default","uuid":"e3988c4d-f288-4e63-b449-7f686f02f625","deviceName":"aktualino-esp32-e40398-0ed288de","deviceId":"aktualino-esp32-e40398-0ed288de","deviceType":"Other","lastSeen":"2026-08-31T04:37:36Z","createdAt":"2026-08-31T04:31:38Z","activatedAt":"2026-08-31T04:31:43Z","deviceStatus":"UpToDate","notes":null,"hibernated":false,"mqttLastSeen":null,"mqttStatus":"NotSeen","attributes":{}}
+
+--- installed image on the primary ECU (admin) ---
+(ecus endpoint n/a)
+
+
+--- installation history (newest) ---
+{"values":[{"namespace":"default","eventTime":"2026-08-31T04:35:07Z","correlationId":"urn:here-ota:mtu:01a05614-da85-7fda-b7e0-997ef45834e9","deviceUuid":"e3988c4d-f288-4e63-b449-7f686f02f625","result":{"success":true,"code":"OK","description":"Device has been successfully installed"},"ecuReports":{"aktualinoespieaniooeadjiaonciino":{"result":{"success":true,"code":"OK","description":"Installing package was successful"},"target":["aktualino-esp32-0.3.0"],"rawReport":null}},"rawReport":"Installation successful"}],"total":1,"offset":0,"limit":50}[{"id":"aktualinoespieaniooeadjiaonciino","hardwareId":"aktualino-esp32","primary":true,"image":{"filepath":"aktualino-esp32-0.3.0","size":1194064,"hash":{"sha256":"b6e3174d901009734347a00d4aafce426093781e3853e803a166a16e70969045"}}}]
+--- SUMMARY (installed image on primary ECU, admin director) ---
+ecu_serial: aktualinoespieaniooeadjiaonciino  hardwareId: aktualino-esp32  primary: true
+installed_image.filepath: aktualino-esp32-0.3.0
+installed_image.size: 1194064
+installed_image.sha256: b6e3174d901009734347a00d4aafce426093781e3853e803a166a16e70969045
+deviceStatus: UpToDate
+installation_history newest: correlationId urn:here-ota:mtu:01a05614-da85-7fda-b7e0-997ef45834e9 result{success:true, code:OK}
+=> self-hosted OTA backend recorded the two-repo update 0.2.0 -> 0.3.0 completed.

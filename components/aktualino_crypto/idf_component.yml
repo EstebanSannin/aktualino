@@ -1,0 +1,4 @@
+## Managed dependencies for aktualino_crypto (ESP-IDF component manager).
+## libsodium provides the Ed25519 verify/sign/keygen path (SPEC §8, PINNED).
+dependencies:
+  espressif/libsodium: "*"

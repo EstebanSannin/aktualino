@@ -1,0 +1,14 @@
+# Aktualino partition table — ESP32-S3, 8 MB flash (factory-less A/B).
+#
+# Same shape as the 4 MB classic-ESP32 table (partitions.csv) but with 3 MB app
+# slots to exploit the S3's extra flash. See SPEC §10.
+#
+# App (ota_*) partitions must be aligned to 0x10000 (64 KB).
+#
+# Name,     Type, SubType, Offset,   Size,     Flags
+nvs,        data, nvs,     0x9000,   0x6000,
+otadata,    data, ota,     0xf000,   0x2000,
+phy_init,   data, phy,     0x11000,  0x1000,
+ota_0,      app,  ota_0,   0x20000,  0x300000,
+ota_1,      app,  ota_1,   0x320000, 0x300000,
+# End of ota_1: 0x620000 — leaves ~0x1E0000 (1.9 MB) headroom under 0x800000 (8 MB).

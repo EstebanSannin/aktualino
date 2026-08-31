@@ -1,0 +1,17 @@
+# Aktualino — ESP32-S3 (8 MB flash + 8 MB PSRAM) overlay.
+# Applied on top of sdkconfig.defaults when target == esp32s3.
+# NOTE: the S3 board is not physically connected (WORKPLAN) — this target is
+# compile-only in Phase 0.
+
+# Custom A/B partition table for 8 MB flash.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.esp32s3.csv"
+
+# 8 MB flash part.
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="8MB"
+
+# Octal PSRAM (typical S3 module). Auto-detect type/size.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_OCT=y
+CONFIG_SPIRAM_SPEED_80M=y
+CONFIG_SPIRAM_USE_MALLOC=y

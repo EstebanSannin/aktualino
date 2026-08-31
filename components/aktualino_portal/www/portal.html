@@ -1,0 +1,408 @@
+<!--
+  Aktualino on-device setup portal (component aktualino_portal).
+  Self-contained: system fonts only (the setup AP has no internet), inline CSS/JS,
+  no external requests. Adapted from docs mockup provisioning-portal.html.
+  Served gzipped from flash by aktualino_portal's HTTP server at GET /.
+  Talks to: GET /config, GET /scan, POST /provision, GET /status.
+-->
+<title>Aktualino Setup</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{
+    --ground:#0e1519; --surface:#141d23; --surface2:#1b262d; --raised:#213039;
+    --line:#28363f; --line-soft:#1f2b33;
+    --text:#e8f0f3; --muted:#8ba0ab; --faint:#5f727c;
+    --signal:#37d3c1; --amber:#f2b45c; --ok:#59d59a; --crit:#e2716e;
+    --focus:#37d3c1; --fs:15px;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px; --r-sm:8px;
+    --shadow:0 18px 48px -20px rgba(0,0,0,.7),0 2px 8px -3px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(120% 80% at 50% -10%,#16232b 0%,var(--ground) 55%) fixed,var(--ground);
+    color:var(--text); font-family:var(--sans); font-size:var(--fs); line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:22px 16px 40px;
+  }
+  .wrap{width:100%; max-width:428px; display:flex; flex-direction:column; gap:14px}
+  .apbar{display:flex; align-items:center; gap:10px; padding:9px 13px;
+    background:var(--surface); border:1px solid var(--line); border-radius:999px;
+    color:var(--muted); font-family:var(--mono); font-size:12px}
+  .apbar .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);
+    box-shadow:0 0 0 3px rgba(55,211,193,.15); flex:none; animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(55,211,193,0)}}
+  .apbar b{color:var(--text); font-weight:600}
+  .panel{background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden}
+  .head{padding:20px 20px 16px; border-bottom:1px solid var(--line-soft)}
+  .brand{display:flex; align-items:center; gap:11px}
+  .glyph{width:34px;height:34px;border-radius:9px;flex:none;
+    background:linear-gradient(150deg,#1d2c33,#132025); border:1px solid var(--line); display:grid;place-items:center}
+  .glyph svg{width:20px;height:20px}
+  .brand h1{margin:0; font-size:16px; font-weight:600}
+  .brand p{margin:1px 0 0; font-size:12px; color:var(--muted); font-family:var(--mono)}
+  .secure{margin-left:auto; display:flex; align-items:center; gap:5px; color:var(--signal);
+    font-size:11px; font-family:var(--mono); font-weight:500}
+  .secure svg{width:13px;height:13px}
+  .steps{display:flex; gap:6px; margin-top:16px}
+  .steps .s{flex:1; display:flex; flex-direction:column; gap:6px}
+  .steps .bar{height:3px; border-radius:2px; background:var(--raised)}
+  .steps .s.done .bar,.steps .s.active .bar{background:var(--signal)}
+  .steps .lab{font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--faint); font-weight:600}
+  .steps .s.active .lab{color:var(--text)}
+  .steps .s.done .lab{color:var(--muted)}
+  .body{padding:18px 20px 22px}
+  .view{display:none; flex-direction:column; gap:16px}
+  .view.on{display:flex; animation:rise .3s ease both}
+  @keyframes rise{from{opacity:0;transform:translateY(6px)}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  .eyebrow{font-size:11px; letter-spacing:.7px; text-transform:uppercase; color:var(--signal); font-weight:600}
+  .lead{margin:2px 0 0; font-size:13px; color:var(--muted)}
+  .nets{display:flex; flex-direction:column; border:1px solid var(--line); border-radius:var(--r-sm); overflow:hidden}
+  .net{display:flex; align-items:center; gap:12px; padding:12px 13px; background:var(--surface2);
+    border:none; border-bottom:1px solid var(--line-soft); color:var(--text); width:100%;
+    font:inherit; text-align:left; cursor:pointer}
+  .net:last-child{border-bottom:none}
+  .net:hover{background:var(--raised)}
+  .net.sel{background:var(--raised); box-shadow:inset 3px 0 0 var(--signal)}
+  .net .name{font-weight:500; font-size:14px}
+  .net .meta{font-family:var(--mono); font-size:11px; color:var(--faint); margin-top:1px}
+  .net .right{margin-left:auto; display:flex; align-items:center; gap:9px; color:var(--muted)}
+  .net .right svg{width:15px;height:15px; display:block}
+  .bars{display:flex; align-items:flex-end; gap:2px; height:14px}
+  .bars i{width:3px; background:var(--faint); border-radius:1px}
+  .bars i.on{background:var(--signal)}
+  .net.sel .check{color:var(--signal)}
+  .row-act{display:flex; justify-content:space-between; align-items:center}
+  .link{background:none;border:none;color:var(--signal);font:inherit;font-size:12px;cursor:pointer;padding:4px 0}
+  .link:hover{text-decoration:underline}
+  .field{display:flex; flex-direction:column; gap:6px}
+  .field label{font-size:11.5px; letter-spacing:.4px; text-transform:uppercase; color:var(--muted); font-weight:600}
+  .inp{display:flex; align-items:center; background:var(--surface2); border:1px solid var(--line);
+    border-radius:var(--r-sm); padding:0 4px 0 12px}
+  .inp:focus-within{border-color:var(--signal); box-shadow:0 0 0 3px rgba(55,211,193,.14)}
+  .inp input{flex:1; background:none; border:none; outline:none; color:var(--text);
+    font-family:var(--mono); font-size:13.5px; padding:11px 0}
+  .inp input::placeholder{color:var(--faint)}
+  .inp .ghost{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;border-radius:6px;
+    font-family:var(--mono);font-size:11px}
+  .inp .ghost:hover{color:var(--text);background:var(--raised)}
+  .hint{font-size:11.5px; color:var(--faint)}
+  .hint b{color:var(--muted); font-weight:600}
+  .banner{display:flex; gap:10px; align-items:flex-start; padding:12px 13px; border-radius:var(--r-sm);
+    background:rgba(55,211,193,.08); border:1px solid rgba(55,211,193,.28); color:var(--text); font-size:13px}
+  .banner svg{width:16px;height:16px;color:var(--signal);flex:none;margin-top:2px}
+  .banner b{font-weight:600}
+  .readout{border:1px solid var(--line-soft); border-radius:var(--r-sm); background:rgba(0,0,0,.16)}
+  .readout .row{display:flex; justify-content:space-between; gap:12px; padding:9px 13px; border-bottom:1px solid var(--line-soft)}
+  .readout .row:last-child{border-bottom:none}
+  .readout .k{color:var(--muted); font-size:12.5px}
+  .readout .v{font-family:var(--mono); font-size:12.5px; color:var(--text); text-align:right; word-break:break-all}
+  .btn{display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    padding:13px; border-radius:var(--r-sm); border:1px solid transparent; cursor:pointer;
+    font:inherit; font-weight:600; font-size:14px}
+  .btn.primary{background:var(--signal); color:#06231f; border-color:var(--signal)}
+  .btn.primary:hover{background:#4be0ce}
+  .btn.primary:disabled{opacity:.4; cursor:not-allowed}
+  .btn.ghost{background:transparent; color:var(--muted); border-color:var(--line)}
+  .btn.ghost:hover{color:var(--text); border-color:var(--muted)}
+  .btnrow{display:flex; gap:10px}
+  .btnrow .btn{width:auto} .btnrow .grow{flex:1}
+  :focus-visible{outline:2px solid var(--focus); outline-offset:2px}
+  .status{display:flex; flex-direction:column; gap:2px}
+  .st{display:flex; align-items:center; gap:12px; padding:11px 4px; color:var(--faint); font-size:13.5px}
+  .st .ic{width:20px;height:20px;flex:none;display:grid;place-items:center}
+  .st .ring{width:15px;height:15px;border-radius:50%;border:2px solid var(--line)}
+  .st.run{color:var(--text)}
+  .st.run .ring{border-color:var(--signal);border-top-color:transparent;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .st.ok{color:var(--text)} .st.ok .ic{color:var(--ok)}
+  .st.err{color:var(--crit)} .st.err .ic{color:var(--crit)}
+  .st .det{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .st.ok .det,.st.run .det{color:var(--muted)}
+  .done-card{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;padding:8px 4px 2px}
+  .badge-ok{width:56px;height:56px;border-radius:50%;background:rgba(89,213,154,.13);
+    border:1px solid rgba(89,213,154,.4);display:grid;place-items:center;color:var(--ok)}
+  .badge-ok.bad{background:rgba(226,113,110,.13);border-color:rgba(226,113,110,.4);color:var(--crit)}
+  .badge-ok svg{width:28px;height:28px}
+  .done-card h2{margin:0;font-size:18px}
+  .done-card p{margin:0;color:var(--muted);font-size:13px;max-width:34ch}
+  .foot{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--faint);
+    font-size:11.5px;font-family:var(--mono);text-align:center}
+  .foot svg{width:12px;height:12px;opacity:.7}
+</style>
+
+<div class="wrap">
+  <div class="apbar">
+    <span class="dot"></span> Wi-Fi: <b id="apName">aktualino-setup</b>
+  </div>
+
+  <div class="panel">
+    <div class="head">
+      <div class="brand">
+        <span class="glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#37d3c1" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/><path d="M12 9.5l2.2 1.3v2.4L12 14.5l-2.2-1.3v-2.4z" fill="#37d3c1" stroke="none"/>
+          </svg>
+        </span>
+        <div>
+          <h1>Set up your board</h1>
+          <p id="chip">ESP32 &middot; Aktualino</p>
+        </div>
+        <span class="secure" title="Uptane-secured updates">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 9.6C8 19.4 5 15.6 5 11V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          Uptane
+        </span>
+      </div>
+      <div class="steps" id="stepper">
+        <div class="s active"><div class="bar"></div><div class="lab">Wi-Fi</div></div>
+        <div class="s"><div class="bar"></div><div class="lab">Enroll</div></div>
+        <div class="s"><div class="bar"></div><div class="lab">Done</div></div>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- STEP 1: WIFI -->
+      <div class="view on" id="v0">
+        <div>
+          <div class="eyebrow">Step 1 &mdash; Network</div>
+          <p class="lead">Pick the Wi-Fi the board should join. It needs internet to reach the update cloud.</p>
+        </div>
+        <div class="nets" id="nets"><div class="net"><div class="name">Scanning&hellip;</div></div></div>
+        <div class="row-act">
+          <button class="link" id="rescan" type="button">Rescan</button>
+          <button class="link" id="manual" type="button">Enter SSID manually</button>
+        </div>
+        <div class="field" id="ssidField" style="display:none">
+          <label for="ssid">Network name (SSID)</label>
+          <div class="inp"><input id="ssid" type="text" placeholder="MyNetwork" autocomplete="off" spellcheck="false"></div>
+        </div>
+        <div class="field" id="pwField" style="display:none">
+          <label for="pw">Password for <span id="pwFor" style="text-transform:none;color:var(--text)"></span></label>
+          <div class="inp">
+            <input id="pw" type="password" placeholder="password" autocomplete="off">
+            <button class="ghost" id="pwToggle" type="button">show</button>
+          </div>
+        </div>
+        <button class="btn primary" id="toEnroll" disabled>Continue</button>
+      </div>
+
+      <!-- STEP 2: ENROLL -->
+      <div class="view" id="v1">
+        <div>
+          <div class="eyebrow">Step 2 &mdash; Cloud enrollment</div>
+          <p class="lead" id="enrollLead">How is this board's cloud credential provided?</p>
+        </div>
+
+        <div class="banner" id="mBaked">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 9.6C8 19.4 5 15.6 5 11V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          <div>This build is pre-configured for <b id="beName">Torizon Cloud</b> &mdash; the board enrolls itself. Nothing to paste.</div>
+        </div>
+
+        <div class="field" id="mByo" style="display:none">
+          <label for="tok">Provisioning credential</label>
+          <div class="inp"><input id="tok" type="text" placeholder="paste your provisioning token" spellcheck="false" autocomplete="off"></div>
+          <div class="hint">From <b>your own</b> account &mdash; a durable provisioning token, not a short-lived console one. Only needed for a binary you didn't build yourself.</div>
+        </div>
+
+        <div class="field">
+          <label for="dname">Device name <span style="text-transform:none;color:var(--faint);letter-spacing:0">&mdash; optional</span></label>
+          <div class="inp"><input id="dname" type="text" placeholder="production-device-01" spellcheck="false" autocomplete="off"></div>
+        </div>
+
+        <div class="readout" aria-label="This device">
+          <div class="row"><span class="k">Device</span><span class="v" id="devName">aktualino-esp32</span></div>
+          <div class="row"><span class="k">Chip</span><span class="v" id="devChip">ESP32</span></div>
+          <div class="row"><span class="k">Hardware ID</span><span class="v" id="devHw">aktualino-esp32</span></div>
+        </div>
+        <div class="btnrow">
+          <button class="btn ghost" id="back0" type="button">Back</button>
+          <button class="btn primary grow" id="provision">Provision device</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: STATUS / DONE -->
+      <div class="view" id="v2">
+        <div id="running">
+          <div class="eyebrow">Provisioning</div>
+          <p class="lead">Keep this page open &mdash; the board is enrolling itself.</p>
+          <div class="status" id="status" style="margin-top:14px"></div>
+        </div>
+        <div class="done-card" id="doneCard" style="display:none">
+          <div class="badge-ok" id="doneBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+          <h2 id="doneTitle">Board provisioned</h2>
+          <p id="doneMsg">It's registered with the update cloud and now checks for signed updates on its own. You can close this page and disconnect.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 9.6C8 19.4 5 15.6 5 11V6z"/></svg>
+    On-device captive portal &middot; Uptane-secured
+  </div>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var sel=null, manualMode=false, credNeeded=false;
+
+  // status rows: label + detail, keyed to backend /status states in order.
+  var STAGES=[
+    {k:"joining_wifi",  lab:"Joining Wi-Fi",           det:""},
+    {k:"sntp",          lab:"Syncing secure time",     det:"SNTP"},
+    {k:"requesting_creds",lab:"Requesting credentials", det:""},
+    {k:"registering",   lab:"Registering ECU key",     det:"Ed25519"},
+    {k:"verifying",     lab:"Verifying update metadata",det:"Uptane"}
+  ];
+  var okIC='<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span>';
+  var errIC='<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></span>';
+
+  function api(path,opts){return fetch(path,opts).then(function(r){return r.json();});}
+
+  // ---- config: decide Path A (pre-provisioned) vs B (bring-your-own) ----
+  api("/config").then(function(c){
+    if(c.ap_ssid){$("apName").textContent=c.ap_ssid;}
+    if(c.chip){$("chip").textContent=c.chip+" · Aktualino"; $("devChip").textContent=c.chip;}
+    if(c.device_name){$("devName").textContent=c.device_name;}
+    if(c.hardware_id){$("devHw").textContent=c.hardware_id;}
+    if(c.backend_name){$("beName").textContent=c.backend_name;}
+    credNeeded=!!c.credential_needed;
+    $("mBaked").style.display=credNeeded?"none":"flex";
+    $("mByo").style.display=credNeeded?"flex":"none";
+    if(credNeeded){$("enrollLead").textContent="This board carries no cloud credential — paste your provisioning token.";}
+  }).catch(function(){});
+
+  // ---- Wi-Fi scan ----
+  function barsHTML(s){var h='<span class="bars">';for(var i=1;i<=4;i++){h+='<i class="'+(i<=s?'on':'')+'" style="height:'+(4+i*2.4)+'px"></i>';}return h+'</span>';}
+  var lockSVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+  var checkSVG='<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+  function rssiBars(r){ if(r>=-55)return 4; if(r>=-67)return 3; if(r>=-78)return 2; return 1; }
+
+  function renderNets(list){
+    var el=$("nets"); el.innerHTML="";
+    if(!list||!list.length){el.innerHTML='<div class="net"><div class="name">No networks found</div></div>';return;}
+    list.forEach(function(w){
+      var locked=w.auth!==0; var s=rssiBars(w.rssi);
+      var b=document.createElement('button'); b.className='net'; b.type='button';
+      b.innerHTML='<div><div class="name"></div><div class="meta">'+(locked?'secured':'open')+' · '+w.rssi+' dBm</div></div>'+
+        '<span class="right">'+(locked?lockSVG:'')+barsHTML(s)+'<span style="width:16px"></span></span>';
+      b.querySelector('.name').textContent=w.ssid;   // textContent = no HTML injection
+      b.addEventListener('click',function(){
+        manualMode=false; $("ssidField").style.display="none";
+        Array.prototype.forEach.call(document.querySelectorAll('.net'),function(x){x.classList.remove('sel');
+          var c=x.querySelector('.right>span:last-child'); if(c)c.innerHTML='';});
+        b.classList.add('sel'); sel={ssid:w.ssid,locked:locked};
+        b.querySelector('.right>span:last-child').innerHTML=checkSVG;
+        $("pwFor").textContent=w.ssid;
+        $("pwField").style.display=locked?'flex':'none';
+        $("toEnroll").disabled=false;
+      });
+      el.appendChild(b);
+    });
+  }
+  function scan(){
+    $("nets").innerHTML='<div class="net"><div class="name">Scanning&hellip;</div></div>';
+    api("/scan").then(function(d){renderNets(d.networks||d);}).catch(function(){
+      $("nets").innerHTML='<div class="net"><div class="name">Scan failed &mdash; enter SSID manually</div></div>';
+    });
+  }
+  scan();
+  $("rescan").addEventListener('click',scan);
+  $("manual").addEventListener('click',function(){
+    manualMode=true; sel=null;
+    Array.prototype.forEach.call(document.querySelectorAll('.net'),function(x){x.classList.remove('sel');});
+    $("ssidField").style.display="flex"; $("pwField").style.display="flex";
+    $("pwFor").textContent="this network"; $("ssid").focus();
+    $("toEnroll").disabled=false;
+  });
+
+  $("pwToggle").addEventListener('click',function(){
+    var i=$("pw"); var sh=i.type==='password'; i.type=sh?'text':'password'; this.textContent=sh?'hide':'show';
+  });
+
+  // ---- step navigation ----
+  var views=[$("v0"),$("v1"),$("v2")];
+  var stepper=document.querySelectorAll('#stepper .s');
+  function go(n){
+    views.forEach(function(v,i){v.classList.toggle('on',i===n);});
+    stepper.forEach(function(s,i){s.classList.toggle('active',i===n);s.classList.toggle('done',i<n);});
+  }
+  $("toEnroll").addEventListener('click',function(){
+    if(manualMode && !$("ssid").value.trim()){$("ssid").focus();return;}
+    go(1);
+  });
+  $("back0").addEventListener('click',function(){go(0);});
+
+  function currentSsid(){return manualMode?$("ssid").value.trim():(sel?sel.ssid:"");}
+
+  // ---- provision ----
+  $("provision").addEventListener('click',function(){
+    var body={ssid:currentSsid(), password:$("pw").value, device_name:$("dname").value.trim()};
+    if(credNeeded){body.credential=$("tok").value.trim();}
+    go(2);
+    // render status rows
+    var s=$("status"); s.innerHTML="";
+    STAGES.forEach(function(st){
+      var d=document.createElement('div'); d.className='st'; d.dataset.k=st.k;
+      d.innerHTML='<span class="ic"><span class="ring"></span></span><span>'+st.lab+'</span><span class="det">'+st.det+'</span>';
+      s.appendChild(d);
+    });
+    $("provision").disabled=true;
+    api("/provision",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(){poll();})
+      .catch(function(){poll();});   // POST may drop as STA comes up; poll anyway
+  });
+
+  function markRows(state,msg){
+    var order=STAGES.map(function(x){return x.k;});
+    var idx=order.indexOf(state);
+    var done=(state==="done"), err=(state==="error");
+    if(done)idx=order.length;
+    STAGES.forEach(function(st,i){
+      var el=$("status").querySelector('.st[data-k="'+st.k+'"]'); if(!el)return;
+      el.classList.remove('run','ok','err');
+      if(err && i===Math.max(idx,0)){
+        el.classList.add('err');
+        el.innerHTML=errIC+'<span>'+st.lab+'</span><span class="det">'+(msg||"failed")+'</span>';
+      } else if(i<idx){
+        el.classList.add('ok');
+        el.innerHTML=okIC+'<span>'+st.lab+'</span><span class="det">'+st.det+'</span>';
+      } else if(i===idx){
+        el.classList.add('run');
+        el.innerHTML='<span class="ic"><span class="ring"></span></span><span>'+st.lab+'</span><span class="det">'+st.det+'</span>';
+      }
+    });
+  }
+  function finishOK(st){
+    $("running").style.display="none";
+    var dc=$("doneCard"); dc.style.display="flex";
+    if(st && st.uuid){
+      var r=document.createElement('div'); r.className='readout'; r.style.cssText="width:100%;text-align:left;margin-top:4px";
+      r.innerHTML='<div class="row"><span class="k">Device UUID</span><span class="v">'+st.uuid+'</span></div>';
+      dc.appendChild(r);
+    }
+  }
+  function finishErr(msg){
+    $("running").style.display="none";
+    var dc=$("doneCard"); dc.style.display="flex";
+    $("doneBadge").className="badge-ok bad";
+    $("doneBadge").innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>';
+    $("doneTitle").textContent="Provisioning failed";
+    $("doneMsg").textContent=msg||"Something went wrong. Check the board and try again.";
+  }
+  function poll(){
+    api("/status").then(function(st){
+      var state=st.state||"joining_wifi";
+      if(state==="done"){markRows("done");finishOK(st);return;}
+      if(state==="error"){markRows("error",st.error);setTimeout(function(){finishErr(st.error);},900);return;}
+      markRows(state);
+      setTimeout(poll,1200);
+    }).catch(function(){setTimeout(poll,1500);});  // STA switch drops the AP briefly
+  }
+})();
+</script>

@@ -1,0 +1,143 @@
+ets Jun  8 2016 00:22:57
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6280
+load:0x40078000,len:15816
+load:0x40080400,len:4
+load:0x40080404,len:3920
+entry 0x40080648
+I (29) boot: ESP-IDF v5.4.4-1162-g42b44c7d9bc 2nd stage bootloader
+I (29) boot: compile time Aug 31 2026 09:24:28
+I (29) boot: Multicore bootloader
+I (32) boot: chip revision: v1.0
+I (35) boot.esp32: SPI Speed      : 40MHz
+I (39) boot.esp32: SPI Mode       : DIO
+I (42) boot.esp32: SPI Flash Size : 4MB
+I (46) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (53) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (66) boot:  1 otadata          OTA data         01 00 0000f000 00002000
+I (72) boot:  2 phy_init         RF data          01 01 00011000 00001000
+I (79) boot:  3 ota_0            OTA app          00 10 00020000 00180000
+I (85) boot:  4 ota_1            OTA app          00 11 001a0000 00180000
+I (92) boot: End of partition table
+I (95) esp_image: segment 0: paddr=00020020 vaddr=3f400020 size=34414h (214036) map
+I (176) esp_image: segment 1: paddr=0005443c vaddr=3ffb0000 size=04e90h ( 20112) load
+I (183) esp_image: segment 2: paddr=000592d4 vaddr=40080000 size=06d44h ( 27972) load
+I (194) esp_image: segment 3: paddr=00060020 vaddr=400d0020 size=cd658h (841304) map
+I (482) esp_image: segment 4: paddr=0012d680 vaddr=40086d44 size=162f0h ( 90864) load
+I (517) esp_image: segment 5: paddr=00143978 vaddr=50000000 size=0001ch (    28) load
+I (531) boot: Loaded app from partition at offset 0x20000
+I (532) boot: Disabling RNG early entropy source...
+I (542) quad_psram: This chip is ESP32-D0WD
+I (544) esp_psram: Found 8MB PSRAM device
+I (544) esp_psram: Speed: 40MHz
+I (546) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.
+W (553) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped
+I (562) cpu_start: Multicore app
+I (1469) esp_psram: SPI SRAM memory test OK
+I (1477) cpu_start: GPIO 3 and 1 are used as console UART I/O pins
+I (1477) cpu_start: Pro cpu start user code
+I (1477) cpu_start: cpu freq: 160000000 Hz
+I (1482) app_init: Application information:
+I (1487) app_init: Project name:     aktualino
+I (1492) app_init: App version:      0.1.0
+I (1497) app_init: Compile time:     Aug 31 2026 09:37:06
+I (1503) app_init: ELF file SHA256:  773845d0f...
+I (1508) app_init: ESP-IDF:          v5.4.4-1162-g42b44c7d9bc
+I (1515) efuse_init: Min chip rev:     v0.0
+I (1520) efuse_init: Max chip rev:     v3.99 
+I (1525) efuse_init: Chip rev:         v1.0
+I (1530) heap_init: Initializing. RAM available for dynamic allocation:
+I (1537) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (1543) heap_init: At 3FFB9968 len 00026698 (153 KiB): DRAM
+I (1549) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (1556) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (1562) heap_init: At 4009D034 len 00002FCC (11 KiB): IRAM
+I (1569) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator
+I (1578) spi_flash: detected chip: generic
+I (1581) spi_flash: flash io: dio
+I (1586) main_task: Started on CPU0
+I (1596) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1596) main_task: Calling app_main()
+I (1636) akt_main: state: <reset> -> BOOT
+I (1646) akt_main: ======================================================
+I (1646) akt_main:  Aktualino — tiny Uptane OTA client (Phase 4a: two-repo verify)
+I (1646) akt_main:  app: aktualino  version: 0.1.0
+I (1656) akt_main:  built: Aug 31 2026 09:37:06  idf: v5.4.4-1162-g42b44c7d9bc
+I (1666) akt_main:  sta mac: 84:0d:8e:e4:03:98
+I (1666) akt_main: ======================================================
+I (1686) akt_ota: running partition: ota_0 @ 0x00020000 subtype 0x10  ota-state=VALID
+I (1706) wifi:wifi driver task: 3ffcbd6c, prio:23, stack:6656, core=0
+I (1716) wifi:wifi firmware version: 46c5c26
+I (1716) wifi:wifi certification version: v7.0
+I (1716) wifi:config NVS flash: enabled
+I (1716) wifi:config nano formatting: disabled
+I (1726) wifi:Init data frame dynamic rx buffer num: 32
+I (1726) wifi:Init static rx mgmt buffer num: 5
+I (1736) wifi:Init management short buffer num: 32
+I (1736) wifi:Init dynamic tx buffer num: 32
+I (1736) wifi:Init static rx buffer size: 1600
+I (1746) wifi:Init static rx buffer num: 10
+I (1746) wifi:Init dynamic rx buffer num: 32
+I (1756) wifi_init: rx ba win: 6
+I (1756) wifi_init: accept mbox: 6
+I (1756) wifi_init: tcpip mbox: 32
+I (1766) wifi_init: udp mbox: 6
+I (1766) wifi_init: tcp mbox: 6
+I (1776) wifi_init: tcp tx win: 5760
+I (1776) wifi_init: tcp rx win: 5760
+I (1776) wifi_init: tcp mss: 1440
+I (1786) wifi_init: WiFi IRAM OP enabled
+I (1786) wifi_init: WiFi RX IRAM OP enabled
+I (1796) akt_main: connecting to SSID "DroniX-TIM"...
+I (1796) phy_init: phy_version 4863,a3a4459,Oct 28 2025,14:30:06
+I (1876) wifi:mode : sta (84:0d:8e:e4:03:98)
+I (1876) wifi:enable tsf
+I (1896) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0
+I (1896) wifi:state: init -> auth (0xb0)
+I (1906) wifi:state: auth -> assoc (0x0)
+I (1916) wifi:state: assoc -> run (0x10)
+I (1966) wifi:connected with DroniX-TIM, aid = 33, channel 11, BW20, bssid = a4:91:b1:4c:7f:3b
+I (1966) wifi:security: WPA2-PSK, phy: bgn, rssi: -61, cipher(pairwise:0x3, group:0x3), pmf:0
+I (1976) wifi:pm start, type: 1
+
+I (1976) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (1976) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (2996) esp_netif_handlers: sta ip: 192.168.1.127, mask: 255.255.255.0, gw: 192.168.1.1
+I (2996) akt_main: got IP: 192.168.1.127
+I (2996) akt_core: state: BOOT -> TIME_SYNC
+I (3006) akt_time: SNTP started (server=pool.ntp.org), waiting up to 30000 ms for time
+I (6686) wifi:<ba-add>idx:0 (ifx:0, a4:91:b1:4c:7f:3b), tid:0, ssn:1, winSize:64
+I (6806) akt_time: time synced: 2026-08-31T09:38:41Z
+I (6806) akt_core: state: TIME_SYNC -> CONFIRM
+I (6806) akt_core: state: CONFIRM -> PROVISION
+I (6806) akt_main: already provisioned — device is registered; idling
+I (6816) akt_core: state: PROVISION -> POLL_DIRECTOR
+I (6876) akt_core: trust anchor: using persisted Director root v6 (self-verify OK)
+I (6916) akt_core: trust anchor: using persisted Image root v11 (self-verify OK)
+I (6916) akt_main: ======== Director poll #1 at 2026-08-31T09:38:41Z ========
+I (8646) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (8666) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (10276) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=690)
+I (10326) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (11946) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=815)
+I (11986) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (13596) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=562)
+I (13636) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (13636) akt_core: no update assigned — up to date (no target for aktualino-esp32)
+I (13646) akt_main: poll #1 OK — root=v6 timestamp=v2 snapshot=v2 targets=v2
+I (13656) akt_main: ==> no update assigned — up to date
+I (13736) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (830 bytes)
+I (15576) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (15576) akt_prov: manifest ACCEPTED: HTTP 200
+I (15576) akt_main: manifest re-report: ACCEPTED
+I (45586) akt_main: ======== Director poll #2 at 2026-08-31T09:39:19Z ========
+I (47256) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (47266) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (48866) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=690)
+I (48916) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted

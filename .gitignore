@@ -1,0 +1,28 @@
+# ESP-IDF build artifacts
+build/
+build-*/
+sdkconfig
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# Generated at build time from secrets/ (see tools/sync-build.sh)
+main/wifi_credentials.h
+main/provision_client.h
+
+# Secrets / device credentials — NEVER commit
+*.pem
+*.p12
+*.key
+credentials.zip
+prov*.bin
+/secrets/
+*.nvs.bin
+
+# Host test build
+test/build/
+*.o
+*.out
+
+# OS cruft
+.DS_Store

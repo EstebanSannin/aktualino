@@ -1,0 +1,175 @@
+Torizon Cloud backend — RESOLVED assignment + COMPLETED update (Platform API v2)
+================================================================================
+Date        : 2026-08-31
+Device uuid : 5c2813a6-9a0b-4653-96aa-851518d71aba   hwid aktualino-esp32
+Auth        : Platform API v2 client (secrets/torizon/api-client.json), USER-scoped.
+              OAuth2 client_credentials (form-encoded) at
+              https://kc.torizon.io/auth/realms/ota-users/protocol/openid-connect/token
+              -> Bearer.  (The credentials.zip garage-tools token was REPO-scoped and 403'd
+              on every assignment path; this user-scoped client is authorized for it.)
+
+== RESOLVED: the assignment endpoint + body ==
+  POST https://app.torizon.io/api/v2beta/updates
+  Content-Type: application/json
+  body: {"packageIds":["aktualino-esp32-0.2.0"],
+         "devices":["5c2813a6-9a0b-4653-96aa-851518d71aba"]}
+  -> HTTP 201
+     {"affected":[{"deviceUuid":"5c2813a6-...","deviceId":"aktualino-esp32-85d66f-5c2813",
+                   "name":"aktualino-esp32-85d66f"}],"notAffected":[]}
+  The successful update's id: 01a05769-a03a-7779-84fb-c60546ae8538
+  (Discovered from the Platform API 2.0 OpenAPI spec:
+   https://app.torizon.io/api/docs-2.0/torizon-2.0-openapi.yaml -> operationId postUpdates,
+   summary "Launch an update to one or more devices or fleets". No fleet needed: `devices`
+   accepts up to 50 device UUIDs directly.)
+
+== CONFIRMED: package present ==
+  GET https://app.torizon.io/api/v2beta/packages -> 200, lists
+  {"packageId":"aktualino-esp32-0.2.0","pkgType":"BINARY","size":1194432,
+   "hashes":{"sha256":"1833df59...e7ca"},"hardwareIds":["aktualino-esp32"], packageSource "targets.json"}
+
+== CONFIRMED: device installed image is now 0.2.0 + status UpToDate ==
+  GET /api/v2beta/devices/5c2813a6-9a0b-4653-96aa-851518d71aba ->
+    {
+        "deviceUuid": "5c2813a6-9a0b-4653-96aa-851518d71aba",
+        "deviceName": "aktualino-esp32-85d66f",
+        "deviceId": "aktualino-esp32-85d66f-5c2813",
+        "lastSeen": "2026-08-31T10:45:11Z",
+        "createdAt": "2026-08-31T09:09:46Z",
+        "activatedAt": "2026-08-31T09:13:18Z",
+        "deviceStatus": "UpToDate",
+        "notes": "",
+        "hibernated": false,
+        "lastUpdated": null,
+        "deviceFleets": [],
+        "devicePackages": [
+            {
+                "component": "aktualino-esp32",
+                "installed": {
+                    "name": "aktualino-esp32",
+                    "version": "0.2.0",
+                    "packageId": "aktualino-esp32-0.2.0",
+                    "size": 1194432,
+                    "hashes": {
+                        "sha256": "1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca"
+                    },
+                    "packageSource": "targets.json",
+                    "pkgType": "BINARY",
+                    "hardwareIds": [
+                        "aktualino-esp32"
+                    ],
+                    "createdAt": "2026-08-31T09:42:30Z",
+                    "uri": null,
+                    "proprietaryMeta": {},
+                    "comment": null
+                }
+            }
+        ],
+        "tags": {},
+        "networkInfo": {
+            "deviceUuid": "5c2813a6-9a0b-4653-96aa-851518d71aba",
+            "localIpV4": null,
+            "hostname": null,
+            "macAddress": null
+        }
+    }
+
+== CONFIRMED: update record shows Completed / OK / success ==
+  GET /api/v2beta/updates/devices/5c2813a6-9a0b-4653-96aa-851518d71aba ->
+    {
+        "values": [
+            {
+                "updateId": "01a05769-a03a-7779-84fb-c60546ae8538",
+                "status": "Completed",
+                "createdAt": "2026-08-31T10:42:15Z",
+                "scheduledFor": null,
+                "completedAt": "2026-08-31T10:43:17Z",
+                "deviceResult": {
+                    "resultCode": "OK",
+                    "success": true,
+                    "description": "Device has been successfully installed"
+                },
+                "packages": {
+                    "aktualino-esp32": "aktualino-esp32-0.2.0"
+                }
+            },
+            {
+                "updateId": "01a05767-402d-730b-9b07-70f1cf44248b",
+                "status": "Completed",
+                "createdAt": "2026-08-31T10:39:39Z",
+                "scheduledFor": null,
+                "completedAt": "2026-08-31T10:40:27Z",
+                "deviceResult": {
+                    "resultCode": "INSTALL_FAILED",
+                    "success": false,
+                    "description": "Device installation failed"
+                },
+                "packages": {
+                    "aktualino-esp32": "aktualino-esp32-0.2.0"
+                }
+            },
+            {
+                "updateId": "01a05764-33a7-70b0-8dac-c9f582428d5c",
+                "status": "Completed",
+                "createdAt": "2026-08-31T10:36:19Z",
+                "scheduledFor": null,
+                "completedAt": "2026-08-31T10:36:43Z",
+                "deviceResult": {
+                    "resultCode": "INSTALL_FAILED",
+                    "success": false,
+                    "description": "Device installation failed"
+                },
+                "packages": {
+                    "aktualino-esp32": "aktualino-esp32-0.2.0"
+                }
+            },
+            {
+                "updateId": "01a0575c-459c-7612-baf8-4b673cd0d39c",
+                "status": "Completed",
+                "createdAt": "2026-08-31T10:27:40Z",
+                "scheduledFor": null,
+                "completedAt": "2026-08-31T10:28:30Z",
+                "deviceResult": {
+                    "resultCode": "INSTALL_FAILED",
+                    "success": false,
+                    "description": "Device installation failed"
+                },
+                "packages": {
+                    "aktualino-esp32": "aktualino-esp32-0.2.0"
+                }
+            },
+            {
+                "updateId": "01a05759-f0d5-765a-b700-15ff1ffa36eb",
+                "status": "Completed",
+                "createdAt": "2026-08-31T10:25:07Z",
+                "scheduledFor": null,
+                "completedAt": "2026-08-31T10:25:48Z",
+                "deviceResult": {
+                    "resultCode": "INSTALL_FAILED",
+                    "success": false,
+                    "description": "Device installation failed"
+                },
+                "packages": {
+                    "aktualino-esp32": "aktualino-esp32-0.2.0"
+                }
+            }
+        ],
+        "total": 5,
+        "offset": 0,
+        "limit": 50
+    }
+
+== Notes ==
+- The successful update is 01a05769-... (resultCode OK, success true,
+  "Device has been successfully installed", completedAt 2026-08-31T10:43:17Z).
+- The four earlier "Completed / INSTALL_FAILED" records (01a05759, 01a0575c, 01a05764,
+  01a05767) are the on-device download iterations BEFORE the device firmware learned to
+  follow Torizon's 302-to-object-storage redirect. Root causes, fixed in aktualino_net:
+    1. manual open()/fetch_headers()/read() streaming flow does not auto-follow 3xx;
+    2. Location header not retained by esp_http_client_get_header in that flow
+       (captured via an HTTP_EVENT_ON_HEADER handler instead);
+    3. the presigned S3 URL (~1.5 KB query) overflowed the 512-byte TX buffer
+       ("Out of buffer") -> buffer_size_tx raised to 4096 on the redirect leg;
+    plus CONFIG_MBEDTLS_CERTIFICATE_BUNDLE enabled (FULL) so the Amazon S3 root validates.
+- The Director admin API (GET /director/api/v1/admin/devices/<uuid>/ecus) is 403 for this
+  USER-scoped Platform API token (it was 200 for the repo-scoped garage-tools token used in
+  Stage 3). The Platform API v2 device/update views above are the authoritative confirmation.

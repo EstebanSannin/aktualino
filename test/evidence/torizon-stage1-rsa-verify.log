@@ -1,0 +1,37 @@
+Stage 1 — DE-RISK: portable Uptane core vs REAL Torizon Cloud metadata (RSA)
+============================================================================
+Date: 2026-08-31
+Host-test container: gcc:13 on m920x (libsodium-dev libcjson-dev libmbedtls-dev)
+Device: aktualino-esp32-85d66f  uuid 5c2813a6-9a0b-4653-96aa-851518d71aba
+Gateway: https://dgw.torizon.io (mTLS: client.pem + pkey.pem[EC P-256] + root.crt)
+
+Trust anchors (credentials.zip): Director RSA root v6, Image RSA root v11.
+All roles signed rsassa-pss-sha256 over RSA-2048 keys (256-byte sigs).
+
+Metadata captured byte-exact over mTLS (test/fixtures/torizon/):
+  director/{root v6, timestamp v1, snapshot v1, targets v1}
+  repo/{root v11, timestamp v753, snapshot v750, targets v375}
+NB: live director root == credentials.zip director.root.json (4754 B, v6);
+    live repo root == credentials.zip root.json (3282 B, v11). Anchors are current.
+
+Result: ctest 8/8 PASS. New test_torizon_metadata: 20 checks, 0 failed.
+  - Director root v6 self-signature (RSA) verifies against its own root key.
+  - Image root v11 self-signature (RSA) verifies against its own root key.
+  - Every live Director role (root/timestamp/snapshot/targets) verifies against
+    the Director RSA root keys.
+  - Every live Image role (root/timestamp/snapshot/targets) verifies against the
+    Image RSA root keys.
+    (Because the sig is over canonical(signed), "verifies" == byte-exact
+     canonical-JSON agreement, enforced by the crypto, not a string compare.)
+  - Image-repo meta-hash chain over RAW served bytes:
+    timestamp(v753) -> snapshot.json (2085 B, v750) OK
+    snapshot(v750)  -> root.json    (3282 B, v11)  OK
+    snapshot(v750)  -> targets.json (20595 B, v375) OK
+    truncated-by-1-byte targets -> AKT_ERR_CROSSREPO (caught)
+  - Expiry gate: live Image timestamp -> AKT_ERR_EXPIRED at 2030-01-01.
+  - Tampered RSA signature (1 base64 char flipped) -> AKT_ERR_THRESHOLD.
+  - Anti-rollback: min_version above live version -> AKT_ERR_ROLLBACK.
+
+CONCLUSION: the existing RSASSA-PSS-SHA256 verify path (mbedtls pk_verify_ext,
+MBEDTLS_RSA_SALT_LEN_ANY) and canonical-JSON serializer verify REAL Torizon
+Cloud metadata with ZERO code changes. RSA de-risk passed.

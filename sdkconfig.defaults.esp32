@@ -1,0 +1,17 @@
+# Aktualino — classic ESP32 (WROVER, 4 MB flash + PSRAM) overlay.
+# Applied on top of sdkconfig.defaults when target == esp32.
+
+# Custom A/B partition table for 4 MB flash.
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions.csv"
+
+# 4 MB flash part.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+CONFIG_ESPTOOLPY_FLASHSIZE="4MB"
+
+# PSRAM (WROVER). SPEC §11 assumes a WROVER module with external SPI RAM.
+# Quad PSRAM, memory-mapped; safe to allocate large TLS buffers from PSRAM.
+CONFIG_SPIRAM=y
+CONFIG_SPIRAM_MODE_QUAD=y
+CONFIG_SPIRAM_TYPE_AUTO=y
+CONFIG_SPIRAM_SPEED_40M=y
+CONFIG_SPIRAM_USE_MALLOC=y

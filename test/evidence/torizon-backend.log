@@ -1,0 +1,30 @@
+Torizon Cloud backend operations — publish + assign (Stage 5)
+Date: 2026-08-31   Device uuid: 5c2813a6-9a0b-4653-96aa-851518d71aba   hwid: aktualino-esp32
+Auth: garage-tools OAuth2 client_credentials (credentials.zip treehub.json),
+      namespace <account>, token from kc.torizon.io.
+
+== WORKS: publish a BINARY target into the Image repo (reposerver user_repo) ==
+PUT https://api.torizon.io/repo/api/v1/user_repo/targets/aktualino-esp32-0.2.0
+    ?name=aktualino-esp32&version=0.2.0&hardwareIds=aktualino-esp32&targetFormat=BINARY
+    Content-Type: application/octet-stream  (body = aktualino.bin v0.2.0)
+  -> HTTP 204 (online targets-key signing; targets.json bumped to v376)
+  target sha256=1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca length=1194432
+
+== WORKS: director admin READS (garage token) ==
+GET https://api.torizon.io/director/api/v1/admin/devices/5c2813a6-9a0b-4653-96aa-851518d71aba/ecus -> HTTP 200
+[{"id":"aktualinodaihhedcnbacghagnhoiafnk","hardwareId":"aktualino-esp32","primary":true,"image":{"filepath":"aktualino-esp32-0.1.0","size":1572864,"hash":{"sha256":"773845d0f09c6291b09961ad01ea9e92cb38f92cac56517f8b0bceda39678db5"}}}]
+
+== BLOCKED: every device-update ASSIGNMENT path is 403 for this token ==
+POST https://api.torizon.io/director/api/v1/admin/multi_target_updates -> HTTP 403 : {"name":"FORBIDDEN","description":"Requestor not allowed to POST url: /director/api/v1/admin/multi_target_updates","code":"403"}
+PUT https://api.torizon.io/director/api/v1/admin/devices/5c2813a6-9a0b-4653-96aa-851518d71aba/targets -> HTTP 403 : {"name":"FORBIDDEN","description":"Requestor not allowed to PUT url: /director/api/v1/admin/devices/5c2813a6-9a0b-4653-96aa-851518d71aba/targets","code":"403"}
+GET https://app.torizon.io/api/v2beta/packages -> HTTP 403 : {"code":"403","description":"Requestor not allowed to GET url: /api/v2beta/packages","name":"FORBIDDEN"}
+GET https://app.torizon.io/api/v2beta/fleets -> HTTP 403 : {"code":"403","description":"Requestor not allowed to GET url: /api/v2beta/fleets","name":"FORBIDDEN"}
+GET https://app.torizon.io/api/v2beta/updates -> HTTP 403 : {"code":"403","description":"Requestor not allowed to GET url: /api/v2beta/updates","name":"FORBIDDEN"}
+GET https://app.torizon.io/api/v2beta/devices/5c2813a6-9a0b-4653-96aa-851518d71aba -> HTTP 403 : {"code":"403","description":"Requestor not allowed to GET url: /api/v2beta/devices/5c2813a6-9a0b-4653-96aa-851518d71aba","name":"FORBIDDEN"}
+
+CONCLUSION: credentials.zip's garage-tools client_credentials token is
+REPOSITORY-scoped (repo upload + director reads). Creating a device update
+assignment (director MTU/assignment, or Platform API v2beta updates/fleets)
+requires a Torizon USER session (web console or user-scoped OAuth), which is
+not present in credentials.zip. The target is PUBLISHED and the device is
+provisioned + polling; a single console assignment completes the update.

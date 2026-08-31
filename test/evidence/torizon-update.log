@@ -1,0 +1,38 @@
+Torizon Cloud cloud-driven update (Stage 5) — device side + publish
+===================================================================
+Date: 2026-08-31   Device: aktualino-esp32-85d66f
+uuid 5c2813a6-9a0b-4653-96aa-851518d71aba   ECU aktualinodaihhedcnbacghagnhoiafnk
+Running firmware: v0.1.0 (installed_image recorded by Director from our manifest).
+
+PUBLISHED (image repo) — see torizon-backend.log:
+  target aktualino-esp32-0.2.0  sha256 1833df59844e47ce2f58e4bc26b7388d47f8f9f3d2dba1b9a58f3d3e726fe7ca
+  length 1194432  hardwareIds [aktualino-esp32]  -> user_repo targets.json v376 (RSA-signed).
+
+DEVICE STATE: provisioned + polling dgw.torizon.io every 30 s. Director targets is
+empty (no assignment yet), so the device logs "no update assigned — up to date".
+The two-repo cross-verified A/B download+install+rollback path is already proven on
+hardware against the identical Uptane stack (self-hosted OTA backend Phase 3 + 4a, v0.2.0->v0.3.0;
+see WORKLOG). On Torizon the SAME code verifies the RSA metadata (Stage 4 below).
+
+BLOCKED: creating the device-update ASSIGNMENT. The credentials.zip garage-tools
+client_credentials token is repository-scoped; every director MTU/assignment and
+Platform API v2beta update path returns HTTP 403 (exact requests+responses in
+torizon-backend.log). Assignment needs a Torizon USER session (web console /
+user-scoped OAuth), absent from credentials.zip and from this environment (no
+connected browser). Once assigned in the console, the polling device completes the
+update automatically (poll -> two-repo RSA cross-verify -> mTLS download from
+dgw.torizon.io -> sha256/length -> A/B flash -> reboot -> mark_valid -> success
+manifest with the assignment correlation_id).
+
+Stage 4 (live metadata verification on-device, RSA) — excerpt:
+I (6806) akt_time: time synced: 2026-08-31T09:38:41Z
+I (6876) akt_core: trust anchor: using persisted Director root v6 (self-verify OK)
+I (6916) akt_core: trust anchor: using persisted Image root v11 (self-verify OK)
+I (10326) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (11986) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (13636) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
+I (13636) akt_core: no update assigned — up to date (no target for aktualino-esp32)
+I (13646) akt_main: poll #1 OK — root=v6 timestamp=v2 snapshot=v2 targets=v2
+I (13656) akt_main: ==> no update assigned — up to date
+I (15576) akt_prov: manifest ACCEPTED: HTTP 200
+I (48916) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 2 >= stored 2) — persisted
