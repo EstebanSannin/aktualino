@@ -388,6 +388,11 @@ static httpd_handle_t start_http(void)
     cfg.lru_purge_enable = true;
     cfg.stack_size = 6144;
     cfg.uri_match_fn = httpd_uri_match_wildcard;
+    /* The request-header buffer is sized by CONFIG_HTTPD_MAX_REQ_HDR_LEN
+     * (raised to 2048 in sdkconfig.defaults): real phone browsers send a header
+     * block larger than the 512 B default, which otherwise overflows and returns
+     * HTTP 431 so the captive page fails to load. ESP-IDF 5.4 has no runtime
+     * override for this, so it is a build-time Kconfig. */
 
     httpd_handle_t h = NULL;
     if (httpd_start(&h, &cfg) != ESP_OK) return NULL;

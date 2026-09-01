@@ -62,6 +62,15 @@ CONFIG_ESP_TLS_USING_MBEDTLS=y
 CONFIG_ESP_HTTP_CLIENT_ENABLE_HTTPS=y
 
 #
+# --- SoftAP setup-portal HTTP server (components/aktualino_portal) ---
+#
+# Real phone browsers (e.g. Android Chrome) send a large request-header block
+# (User-Agent, Accept*, sec-ch-ua, …). esp_http_server's default header buffer is
+# only 512 B: a browser request overflows it and the server returns HTTP 431, so
+# the captive setup page never loads. Raise it so a real browser request fits.
+CONFIG_HTTPD_MAX_REQ_HDR_LEN=2048
+
+#
 # --- Logging (structured, readable during bring-up) ---
 #
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
