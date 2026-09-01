@@ -42,6 +42,11 @@ fits on a classic ESP32 with room to spare.
 - **ESP32 and ESP32-S3.** The security-critical core is portable C (cJSON +
   mbedTLS + libsodium) shared byte-for-byte between the host unit tests and both
   on-target builds.
+- **Optional Berry script secondary.** Build with `CONFIG_AKTUALINO_SCRIPT_SECONDARY=y`
+  (off by default) to deploy small **[Berry](https://github.com/berry-lang/berry)** scripts
+  over the air as their own two-repo-verified Uptane target — read a pin, toggle a
+  relay, small logic — without recompiling the firmware. See
+  [`docs/bundles.md`](docs/bundles.md).
 
 ## Proof points
 
@@ -116,6 +121,8 @@ anti-rollback eFuse, on-device keygen + CSR) is tracked in
 
 - [`SPEC.md`](SPEC.md) — architecture + Appendix A device wire protocol.
 - [`docs/provisioning.md`](docs/provisioning.md) — how a board gets its identity + Wi-Fi.
+- [`docs/bundles.md`](docs/bundles.md) — write & deploy Berry script bundles (the optional script secondary).
+- [`docs/berry-secondary-spec.md`](docs/berry-secondary-spec.md) — the script-secondary design + status.
 - [`docs/torizon-cloud-validation.md`](docs/torizon-cloud-validation.md) — the validated Torizon Cloud flow + results.
 - [`docs/engineering-notes.md`](docs/engineering-notes.md) — hard-won lessons and gotchas.
 - [`docs/hardening-todo.md`](docs/hardening-todo.md) — deferred security work.
