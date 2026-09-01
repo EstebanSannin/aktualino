@@ -405,6 +405,37 @@ char *akt_build_manifest(const char *primary_ecu_serial,
                                      ecu_pk, ecu_sk, out_len);
 }
 
+/*
+ * Build one ECU's nested EcuManifest SignedPayload: the `signed` object
+ * (installed_image + ecu_serial + attacks_detected) signed by (pk, sk). Shared
+ * by the primary and the optional secondary (which reuses the same key). Returns
+ * a signed envelope (caller attaches) or NULL.
+ */
+static cJSON *build_ecu_manifest_env(const char *ecu_serial,
+                                     const akt_target_t *installed,
+                                     const char *attacks_detected,
+                                     const uint8_t pk[32], const uint8_t sk[64])
+{
+    char sha_hex[65];
+    if (akt_hex_encode(installed->sha256, 32, sha_hex, sizeof(sha_hex)) != 0)
+        return NULL;
+    cJSON *inner = cJSON_CreateObject();
+    if (!inner) return NULL;
+    cJSON *img    = cJSON_CreateObject();
+    cJSON *finfo  = cJSON_CreateObject();
+    cJSON *hashes = cJSON_CreateObject();
+    cJSON_AddStringToObject(hashes, "sha256", sha_hex);
+    cJSON_AddItemToObject(finfo, "hashes", hashes);
+    cJSON_AddNumberToObject(finfo, "length", (double)installed->length);
+    cJSON_AddStringToObject(img, "filepath", installed->filepath);
+    cJSON_AddItemToObject(img, "fileinfo", finfo);
+    cJSON_AddItemToObject(inner, "installed_image", img);
+    cJSON_AddStringToObject(inner, "ecu_serial", ecu_serial);
+    cJSON_AddStringToObject(inner, "attacks_detected",
+                            attacks_detected ? attacks_detected : "");
+    return sign_envelope(inner, pk, sk);
+}
+
 char *akt_build_manifest_report(const char *primary_ecu_serial,
                                 const akt_target_t *installed,
                                 const char *attacks_detected,
@@ -412,42 +443,65 @@ char *akt_build_manifest_report(const char *primary_ecu_serial,
                                 const uint8_t ecu_pk[32], const uint8_t ecu_sk[64],
                                 size_t *out_len)
 {
+    return akt_build_manifest_ex(primary_ecu_serial, installed, attacks_detected,
+                                 correlation_id, success, NULL,
+                                 ecu_pk, ecu_sk, out_len);
+}
+
+char *akt_build_manifest_ex(const char *primary_ecu_serial,
+                            const akt_target_t *installed,
+                            const char *attacks_detected,
+                            const char *correlation_id, bool success,
+                            const akt_secondary_t *secondary,
+                            const uint8_t ecu_pk[32], const uint8_t ecu_sk[64],
+                            size_t *out_len)
+{
     if (!primary_ecu_serial || !installed) return NULL;
+    if (secondary && !secondary->ecu_serial) return NULL;
 
-    char sha_hex[65];
-    if (akt_hex_encode(installed->sha256, 32, sha_hex, sizeof(sha_hex)) != 0)
-        return NULL;
-
-    /* ---- inner EcuManifest `signed` ---- */
-    cJSON *inner = cJSON_CreateObject();
-    if (!inner) return NULL;
-    {
-        cJSON *img    = cJSON_CreateObject();
-        cJSON *finfo  = cJSON_CreateObject();
-        cJSON *hashes = cJSON_CreateObject();
-        cJSON_AddStringToObject(hashes, "sha256", sha_hex);
-        cJSON_AddItemToObject(finfo, "hashes", hashes);
-        cJSON_AddNumberToObject(finfo, "length", (double)installed->length);
-        cJSON_AddStringToObject(img, "filepath", installed->filepath);
-        cJSON_AddItemToObject(img, "fileinfo", finfo);
-        cJSON_AddItemToObject(inner, "installed_image", img);
-        cJSON_AddStringToObject(inner, "ecu_serial", primary_ecu_serial);
-        cJSON_AddStringToObject(inner, "attacks_detected",
-                                attacks_detected ? attacks_detected : "");
-    }
-    cJSON *inner_env = sign_envelope(inner, ecu_pk, ecu_sk);
+    /* ---- primary's nested EcuManifest ---- */
+    cJSON *inner_env = build_ecu_manifest_env(primary_ecu_serial, installed,
+                                              attacks_detected, ecu_pk, ecu_sk);
     if (!inner_env) return NULL;
+
+    /* ---- optional secondary's nested EcuManifest (same key) ---- */
+    cJSON *sec_env = NULL;
+    if (secondary) {
+        sec_env = build_ecu_manifest_env(secondary->ecu_serial,
+                                         &secondary->installed,
+                                         secondary->attacks_detected,
+                                         ecu_pk, ecu_sk);
+        if (!sec_env) { cJSON_Delete(inner_env); return NULL; }
+    }
 
     /* ---- outer manifest `signed` ---- */
     cJSON *outer = cJSON_CreateObject();
-    if (!outer) { cJSON_Delete(inner_env); return NULL; }
+    if (!outer) { cJSON_Delete(inner_env); cJSON_Delete(sec_env); return NULL; }
     cJSON_AddStringToObject(outer, "primary_ecu_serial", primary_ecu_serial);
     cJSON *evm = cJSON_CreateObject();
     cJSON_AddItemToObject(evm, primary_ecu_serial, inner_env); /* nested SignedPayload */
+    if (sec_env)
+        cJSON_AddItemToObject(evm, secondary->ecu_serial, sec_env);
     cJSON_AddItemToObject(outer, "ecu_version_manifests", evm);
-    if (correlation_id && correlation_id[0]) {
-        cJSON *ir = build_installation_report(correlation_id,
-                                              primary_ecu_serial, success);
+    /*
+     * The installation_report drives update completion, so it is scoped to the
+     * ECU that just installed. A secondary install (secondary->correlation_id
+     * set) reports the secondary; otherwise the primary's correlation_id, if any,
+     * reports the primary; otherwise no report (heartbeat). (spec §14.7)
+     */
+    const char *ir_corr = NULL, *ir_ecu = NULL;
+    bool ir_success = true;
+    if (secondary && secondary->correlation_id && secondary->correlation_id[0]) {
+        ir_corr = secondary->correlation_id;
+        ir_ecu  = secondary->ecu_serial;
+        ir_success = secondary->success;
+    } else if (correlation_id && correlation_id[0]) {
+        ir_corr = correlation_id;
+        ir_ecu  = primary_ecu_serial;
+        ir_success = success;
+    }
+    if (ir_corr) {
+        cJSON *ir = build_installation_report(ir_corr, ir_ecu, ir_success);
         if (!ir) { cJSON_Delete(outer); return NULL; }
         cJSON_AddItemToObject(outer, "installation_report", ir);
     } else {

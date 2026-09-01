@@ -1,0 +1,205 @@
+Checking "python3" ...
+Python 3.12.3
+"python3" has been detected
+
+Done! You can now compile ESP-IDF projects.
+Go to the project directory and run:
+
+  idf.py build
+ets Jun  8 2016 00:22:57
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:6280
+load:0x40078000,len:15816
+load:0x40080400,len:4
+load:0x40080404,len:3920
+entry 0x40080648
+I (29) boot: ESP-IDF v5.4.4-1166-g4086aa42d15 2nd stage bootloader
+I (29) boot: compile time Aug 31 2026 23:13:22
+I (29) boot: Multicore bootloader
+I (32) boot: chip revision: v1.0
+I (35) boot.esp32: SPI Speed      : 40MHz
+I (39) boot.esp32: SPI Mode       : DIO
+I (42) boot.esp32: SPI Flash Size : 4MB
+I (46) boot: Enabling RNG early entropy source...
+I (50) boot: Partition Table:
+I (53) boot: ## Label            Usage          Type ST Offset   Length
+I (59) boot:  0 nvs              WiFi data        01 02 00009000 00006000
+I (66) boot:  1 otadata          OTA data         01 00 0000f000 00002000
+I (72) boot:  2 phy_init         RF data          01 01 00011000 00001000
+I (79) boot:  3 ota_0            OTA app          00 10 00020000 00180000
+I (85) boot:  4 ota_1            OTA app          00 11 001a0000 00180000
+I (92) boot:  5 scripts          Unknown data     01 82 00320000 00040000
+I (98) boot: End of partition table
+I (101) esp_image: segment 0: paddr=00020020 vaddr=3f400020 size=525ech (337388) map
+I (224) esp_image: segment 1: paddr=00072614 vaddr=3ffb0000 size=04f98h ( 20376) load
+I (232) esp_image: segment 2: paddr=000775b4 vaddr=40080000 size=08a64h ( 35428) load
+I (246) esp_image: segment 3: paddr=00080020 vaddr=400d0020 size=f28d4h (993492) map
+I (586) esp_image: segment 4: paddr=001728fc vaddr=40088a64 size=14ba0h ( 84896) load
+I (619) esp_image: segment 5: paddr=001874a4 vaddr=50000000 size=0001ch (    28) load
+I (633) boot: Loaded app from partition at offset 0x20000
+I (633) boot: Disabling RNG early entropy source...
+I (644) quad_psram: This chip is ESP32-D0WD
+I (645) esp_psram: Found 8MB PSRAM device
+I (645) esp_psram: Speed: 40MHz
+I (647) esp_psram: PSRAM initialized, cache is in low/high (2-core) mode.
+W (655) esp_psram: Virtual address not enough for PSRAM, map as much as we can. 4MB is mapped
+I (664) cpu_start: Multicore app
+I (1570) esp_psram: SPI SRAM memory test OK
+I (1578) cpu_start: GPIO 3 and 1 are used as console UART I/O pins
+I (1578) cpu_start: Pro cpu start user code
+I (1579) cpu_start: cpu freq: 160000000 Hz
+I (1583) app_init: Application information:
+I (1588) app_init: Project name:     aktualino
+I (1593) app_init: App version:      0.1.0
+I (1598) app_init: Compile time:     Aug 31 2026 23:13:19
+I (1604) app_init: ELF file SHA256:  957023271...
+I (1610) app_init: ESP-IDF:          v5.4.4-1166-g4086aa42d15
+I (1616) efuse_init: Min chip rev:     v0.0
+I (1621) efuse_init: Max chip rev:     v3.99 
+I (1626) efuse_init: Chip rev:         v1.0
+I (1631) heap_init: Initializing. RAM available for dynamic allocation:
+I (1638) heap_init: At 3FFAE6E0 len 00001920 (6 KiB): DRAM
+I (1644) heap_init: At 3FFB9F48 len 000260B8 (152 KiB): DRAM
+I (1651) heap_init: At 3FFE0440 len 00003AE0 (14 KiB): D/IRAM
+I (1657) heap_init: At 3FFE4350 len 0001BCB0 (111 KiB): D/IRAM
+I (1664) heap_init: At 4009D604 len 000029FC (10 KiB): IRAM
+I (1670) esp_psram: Adding pool of 4096K of PSRAM memory to heap allocator
+I (1679) spi_flash: detected chip: generic
+I (1682) spi_flash: flash io: dio
+I (1688) main_task: Started on CPU0
+I (1698) esp_psram: Reserving pool of 32K of internal memory for DMA/internal allocations
+I (1698) main_task: Calling app_main()
+I (1738) akt_main: state: <reset> -> BOOT
+I (1748) akt_main: ======================================================
+I (1748) akt_main:  Aktualino — tiny Uptane OTA client (Phase 4a: two-repo verify)
+I (1748) akt_main:  app: aktualino  version: 0.1.0
+I (1758) akt_main:  built: Aug 31 2026 23:13:19  idf: v5.4.4-1166-g4086aa42d15
+I (1768) akt_main:  sta mac: 84:0d:8e:e4:03:98
+I (1768) akt_main: ======================================================
+I (1788) akt_ota: running partition: ota_0 @ 0x00020000 subtype 0x10  ota-state=VALID
+I (1798) berry: berry v1.1.0 up
+I (1798) berry: report tick=1
+I (1798) akt_main: berry S0 selftest: OK (heartbeat seen) (VM heap cost ~4064 B)
+I (1798) akt_script: scripts partition @0x320000 size 256 KB
+I (1808) akt_script: no bundle installed yet
+I (1818) gpio: GPIO[0]| InputEn: 1| OutputEn: 0| OpenDrain: 0| Pullup: 1| Pulldown: 0| Intr:0 
+I (1828) akt_main: using baked Wi-Fi credentials (SSID "DroniX-TIM")
+I (1848) wifi:wifi driver task: 3ffcc384, prio:23, stack:6656, core=0
+I (1858) wifi:wifi firmware version: 46c5c26
+I (1858) wifi:wifi certification version: v7.0
+I (1858) wifi:config NVS flash: enabled
+I (1858) wifi:config nano formatting: disabled
+I (1868) wifi:Init data frame dynamic rx buffer num: 32
+I (1868) wifi:Init static rx mgmt buffer num: 5
+I (1878) wifi:Init management short buffer num: 32
+I (1878) wifi:Init dynamic tx buffer num: 32
+I (1878) wifi:Init static rx buffer size: 1600
+I (1888) wifi:Init static rx buffer num: 10
+I (1888) wifi:Init dynamic rx buffer num: 32
+I (1898) wifi_init: rx ba win: 6
+I (1898) wifi_init: accept mbox: 6
+I (1898) wifi_init: tcpip mbox: 32
+I (1908) wifi_init: udp mbox: 6
+I (1908) wifi_init: tcp mbox: 6
+I (1918) wifi_init: tcp tx win: 5760
+I (1918) wifi_init: tcp rx win: 5760
+I (1918) wifi_init: tcp mss: 1440
+I (1928) wifi_init: WiFi IRAM OP enabled
+I (1928) wifi_init: WiFi RX IRAM OP enabled
+I (1938) akt_main: connecting to SSID "DroniX-TIM"...
+I (1938) phy_init: phy_version 4863,a3a4459,Oct 28 2025,14:30:06
+I (2018) wifi:mode : sta (84:0d:8e:e4:03:98)
+I (2018) wifi:enable tsf
+I (2038) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0
+I (2038) wifi:state: init -> auth (0xb0)
+I (2048) wifi:state: auth -> assoc (0x0)
+I (2048) wifi:state: assoc -> run (0x10)
+I (2098) wifi:connected with DroniX-TIM, aid = 17, channel 11, BW20, bssid = a4:91:b1:4c:7f:3b
+I (2098) wifi:security: WPA2-PSK, phy: bgn, rssi: -64, cipher(pairwise:0x3, group:0x3), pmf:0
+I (2108) wifi:pm start, type: 1
+
+I (2108) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us
+I (2118) wifi:AP's beacon interval = 102400 us, DTIM period = 1
+I (3138) esp_netif_handlers: sta ip: 192.168.1.127, mask: 255.255.255.0, gw: 192.168.1.1
+I (3138) akt_main: got IP: 192.168.1.127
+I (3138) akt_core: state: BOOT -> TIME_SYNC
+I (3148) akt_time: SNTP started (server=pool.ntp.org), waiting up to 30000 ms for time
+I (4248) wifi:<ba-add>idx:0 (ifx:0, a4:91:b1:4c:7f:3b), tid:0, ssn:1, winSize:64
+I (4348) akt_time: time synced: 2026-08-31T23:18:42Z
+I (4348) akt_core: state: TIME_SYNC -> CONFIRM
+I (4348) akt_core: state: CONFIRM -> PROVISION
+I (4348) akt_main: already provisioned — device is registered; idling
+I (4358) akt_core: state: PROVISION -> POLL_DIRECTOR
+I (4418) akt_core: trust anchor: using persisted Director root v6 (self-verify OK)
+I (4458) akt_core: trust anchor: using persisted Image root v11 (self-verify OK)
+I (4458) akt_main: ======== Director poll #1 at 2026-08-31T23:18:42Z ========
+I (6228) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (6238) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (7828) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (7868) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+I (9468) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (9508) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+I (11118) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=981)
+I (11158) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+I (11158) akt_core: no update assigned — up to date (no target for aktualino-esp32)
+I (11168) akt_main: poll #1 OK — root=v6 timestamp=v13 snapshot=v13 targets=v13
+I (11178) akt_main: ==> no update assigned — up to date
+I (12828) akt_net: GET https://dgw.torizon.io/director/root.json -> HTTP 200 (content-length=4754)
+I (12838) akt_core: Director root walk: root up to date at v6 (no rotation)
+I (14438) akt_net: GET https://dgw.torizon.io/director/timestamp.json -> HTTP 200 (content-length=692)
+I (14478) akt_core: Director timestamp: VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+I (16068) akt_net: GET https://dgw.torizon.io/director/snapshot.json -> HTTP 200 (content-length=817)
+I (16108) akt_core: Director snapshot : VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+I (17718) akt_net: GET https://dgw.torizon.io/director/targets.json -> HTTP 200 (content-length=981)
+I (17758) akt_core: Director targets  : VERIFY PASS (signature threshold met, expiry OK, version 13 >= stored 13) — persisted
+W (17758) akt_core: target ASSIGNED for aktualino-lua: aktualino-lua-1.0.0 (len=172 sha256=a982ca474eb7a77b80161f87084a7b7bf91b32e04aa465cf9a076cbf4773151b cid=urn:tdx-ota:update:01a05a04-6af4-7231-9c69-4fb6e7b2c68d)
+W (17778) akt_script: new bundle assigned: aktualino-lua-1.0.0 (v?, len=172) — cross-verify + install
+I (19418) akt_net: GET https://dgw.torizon.io/repo/root.json -> HTTP 200 (content-length=3282)
+I (19428) akt_core: Image root walk: root up to date at v11 (no rotation)
+I (21028) akt_net: GET https://dgw.torizon.io/repo/timestamp.json -> HTTP 200 (content-length=695)
+I (21068) akt_core: Image timestamp: VERIFY PASS (signature threshold met, expiry OK, version 757 >= stored 0) — persisted
+I (21368) wifi:<ba-add>idx:1 (ifx:0, a4:91:b1:4c:7f:3b), tid:3, ssn:1, winSize:64
+I (22688) akt_net: GET https://dgw.torizon.io/repo/snapshot.json -> HTTP 200 (content-length=2085)
+I (22738) akt_core: Image snapshot : VERIFY PASS (signature threshold met, expiry OK, version 754 >= stored 0) — persisted
+I (24428) akt_net: GET https://dgw.torizon.io/repo/targets.json -> HTTP 200 (content-length=21231)
+I (24578) akt_core: Image targets  : VERIFY PASS (signature threshold met, expiry OK, version 377 >= stored 0) — persisted
+W (24588) akt_core: Image repo VERIFIED: roles ok (root=v11 ts=v757 snap=v754 targets=v377) + meta-hash chain ts->snap->targets over raw served bytes PASS
+W (24608) akt_core: CROSS-REPO MATCH PASS: aktualino-lua-1.0.0 (sha256=a982ca474eb7a77b80161f87084a7b7bf91b32e04aa465cf9a076cbf4773151b len=172) is signed by BOTH the Director and the Image repo — install allowed
+W (24628) akt_script: DOWNLOAD bundle: GET https://dgw.torizon.io/repo/targets/aktualino-lua-1.0.0 (len=172)
+I (26298) akt_net: GET https://dgw.torizon.io/repo/targets/aktualino-lua-1.0.0 -> HTTP 302 (content-length=0)
+I (26298) akt_net: following HTTP 302 redirect to https://tzn-prod-reposerver.s3.dualstack.eu-central-1.amazon… (bundle-CA leg)
+I (26748) esp-x509-crt-bundle: Certificate validated
+I (27468) akt_net: GET (redirect) https://tzn-prod-reposerver.s3.dualstack.eu-central-1.amazonaws.com/7f56… -> HTTP 200 (content-length=172)
+I (27488) bundle: lua secondary live via Torizon Uptane
+W (27558) akt_script: BUNDLE INSTALLED: aktualino-lua-1.0.0 (172 B, health=0) — reporting success
+W (27568) akt_prov: reporting SECONDARY bundle aktualino-lua-1.0.0 (SUCCESS) cid=urn:tdx-ota:update:01a05a04-6af4-7231-9c69-4fb6e7b2c68d
+I (27678) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (1759 bytes)
+I (29358) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (29368) akt_prov: manifest ACCEPTED: HTTP 200
+I (29488) akt_prov: manifest: PUT https://dgw.torizon.io/director/manifest (1316 bytes)
+I (31268) akt_net: PUT https://dgw.torizon.io/director/manifest -> HTTP 200 (content-length=2)
+I (31268) akt_prov: manifest ACCEPTED: HTTP 200
+I (31268) akt_main: manifest re-report: ACCEPTED
+
+================================================================================
+UPDATE COMPLETED on real Torizon Cloud (Platform API v2), 2026-08-31T23:19:07Z:
+  GET /api/v2beta/updates/devices/5c2813a6-9a0b-4653-96aa-851518d71aba
+  { "updateId": "01a05a04-6af4-7231-9c69-4fb6e7b2c68d",
+    "status": "Completed",
+    "completedAt": "2026-08-31T23:19:07Z",
+    "deviceResult": { "resultCode": "OK", "success": true,
+                      "description": "Device has been successfully installed" },
+    "packages": { "aktualino-lua": "aktualino-lua-1.0.0" } }
+
+=> S3 closes the loop: the SAME update that hung at "Seen" (s1-torizon-assign.log)
+   is now Completed via a real on-device install — select secondary target by
+   hwid -> two-repo CROSS-REPO MATCH -> download (302->S3) -> run in Berry
+   (bundle setup() logged "lua secondary live via Torizon Uptane") -> store in the
+   scripts partition -> secondary-scoped installation_report (correlation id
+   urn:tdx-ota:update:01a05a04-...) -> Torizon marks it Completed/OK/success.
+   The full Aktualino two-repo Uptane pipeline now DELIVERS, RUNS, and COMPLETES a
+   signed script bundle on a virtual secondary ECU end-to-end.

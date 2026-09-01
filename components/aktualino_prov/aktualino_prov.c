@@ -83,6 +83,19 @@ static void derive_ecu_serial(char out[40], uint32_t nonce)
     out[p] = '\0';
 }
 
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+/*
+ * Secondary (Berry script) ecu_serial = "lua" + the primary serial. Deterministic
+ * (so registration and every manifest agree without extra NVS), unique per
+ * device, and alphabetic — a valid ecu identifier (spec §3). With the 32-char
+ * primary this is 35 chars, well within the 10–64 predicate.
+ */
+static void derive_secondary_serial(const char *primary, char out[70])
+{
+    snprintf(out, 70, "lua%s", primary);
+}
+#endif
+
 static void derive_device_name(char out[48], uint32_t nonce)
 {
     uint8_t mac[6] = {0};
@@ -127,6 +140,34 @@ static esp_err_t register_ecu(const aktualino_prov_inputs_t *in,
                             in->hardware_id ? in->hardware_id : "aktualino-esp32");
     cJSON_AddItemToObject(ecu, "clientKey", key);
     cJSON_AddItemToArray(ecus, ecu);
+
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+    /* Register the Berry script secondary as a SECOND ECU, reusing the primary's
+     * Ed25519 clientKey (spec §3): the director keys verification per ecu_serial,
+     * and both ECUs are the same chip. `VALIDATE`: this is the point that proves
+     * the director accepts two ECUs sharing a clientKey. */
+    {
+        char lua_serial[70];
+        derive_secondary_serial(creds->ecu_serial, lua_serial);
+        cJSON *ecu2 = cJSON_CreateObject();
+        cJSON *key2 = cJSON_CreateObject();
+        cJSON *keyval2 = cJSON_CreateObject();
+        if (ecu2 && key2 && keyval2) {
+            cJSON_AddStringToObject(keyval2, "public", pk_hex);   /* same key */
+            cJSON_AddStringToObject(key2, "keytype", "ED25519");
+            cJSON_AddItemToObject(key2, "keyval", keyval2);
+            cJSON_AddStringToObject(ecu2, "ecu_serial", lua_serial);
+            cJSON_AddStringToObject(ecu2, "hardware_identifier", "aktualino-lua");
+            cJSON_AddItemToObject(ecu2, "clientKey", key2);
+            cJSON_AddItemToArray(ecus, ecu2);
+            ESP_LOGI(TAG, "ecu-register: + secondary %s (hwid aktualino-lua, key reuse)",
+                     lua_serial);
+        } else {
+            cJSON_Delete(ecu2); cJSON_Delete(key2); cJSON_Delete(keyval2);
+        }
+    }
+#endif
+
     cJSON_AddStringToObject(root, "primary_ecu_serial", creds->ecu_serial);
     cJSON_AddItemToObject(root, "ecus", ecus);
 
@@ -173,11 +214,40 @@ static esp_err_t post_manifest(const aktualino_creds_t *creds,
                                const char *server_ca_pem,
                                const uint8_t pk[32], const uint8_t sk[64],
                                const akt_target_t *inst,
-                               const char *correlation_id, bool success)
+                               const char *correlation_id, bool success,
+                               const akt_secondary_t *sec_override)
 {
     size_t mlen = 0;
-    char *man = akt_build_manifest_report(creds->ecu_serial, inst, "",
-                                          correlation_id, success, pk, sk, &mlen);
+    char *man;
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+    /* Report the secondary ECU alongside the primary. `sec_override` (from
+     * aktualino_script) carries the real installed bundle + its correlation id so
+     * the secondary update completes; without it we report the empty-image
+     * placeholder (filepath "unknown", length 0, sha256 of "") — a heartbeat. */
+    char lua_serial[70];
+    derive_secondary_serial(creds->ecu_serial, lua_serial);
+    static const uint8_t SHA256_EMPTY[32] = {
+        0xe3,0xb0,0xc4,0x42,0x98,0xfc,0x1c,0x14, 0x9a,0xfb,0xf4,0xc8,0x99,0x6f,0xb9,0x24,
+        0x27,0xae,0x41,0xe4,0x64,0x9b,0x93,0x4c, 0xa4,0x95,0x99,0x1b,0x78,0x52,0xb8,0x55 };
+    akt_secondary_t sec;
+    if (sec_override) {
+        sec = *sec_override;              /* real installed bundle + correlation */
+        sec.ecu_serial = lua_serial;      /* always our derived serial */
+    } else {
+        memset(&sec, 0, sizeof(sec));
+        sec.ecu_serial = lua_serial;
+        sec.attacks_detected = "";
+        strcpy(sec.installed.filepath, "unknown");
+        sec.installed.length = 0;
+        memcpy(sec.installed.sha256, SHA256_EMPTY, 32);
+    }
+    man = akt_build_manifest_ex(creds->ecu_serial, inst, "",
+                                correlation_id, success, &sec, pk, sk, &mlen);
+#else
+    (void)sec_override;
+    man = akt_build_manifest_report(creds->ecu_serial, inst, "",
+                                    correlation_id, success, pk, sk, &mlen);
+#endif
     if (!man) { ESP_LOGE(TAG, "manifest build failed"); return ESP_FAIL; }
 
     char url[256];
@@ -248,7 +318,7 @@ static esp_err_t send_manifest(const aktualino_prov_inputs_t *in,
 {
     akt_target_t inst;
     fill_current_installed(&inst, in->hardware_id);
-    return post_manifest(creds, in->server_ca_pem, pk, sk, &inst, NULL, true);
+    return post_manifest(creds, in->server_ca_pem, pk, sk, &inst, NULL, true, NULL);
 }
 
 /* ================================================================== *
@@ -671,10 +741,50 @@ esp_err_t aktualino_prov_report_installed(const char *filepath,
              correlation_id ? correlation_id : "(none)");
     err = post_manifest(&creds, NULL, pk, sk, &inst,
                         (correlation_id && correlation_id[0]) ? correlation_id : NULL,
-                        success);
+                        success, NULL);
     aktualino_store_free_creds(&creds);
     return err;
 }
+
+#if CONFIG_AKTUALINO_SCRIPT_SECONDARY
+esp_err_t aktualino_prov_report_secondary(const char *filepath,
+                                          const uint8_t sha256[32], size_t length,
+                                          const char *correlation_id, bool success)
+{
+    esp_err_t err = aktualino_store_init();
+    if (err != ESP_OK) return err;
+
+    aktualino_creds_t creds;
+    err = aktualino_store_load_creds(&creds);
+    if (err != ESP_OK) return err;
+    uint8_t pk[32], sk[64];
+    err = aktualino_store_load_ecu_key(pk, sk);
+    if (err != ESP_OK) { aktualino_store_free_creds(&creds); return err; }
+
+    /* Primary reported as its current running image (heartbeat); the secondary
+     * carries the installed bundle + the correlation id that completes its
+     * update (installation_report scoped to the secondary — akt_build_manifest_ex). */
+    akt_target_t primary;
+    fill_current_installed(&primary, NULL);
+
+    akt_secondary_t sec;
+    memset(&sec, 0, sizeof(sec));
+    sec.attacks_detected = "";
+    snprintf(sec.installed.filepath, sizeof(sec.installed.filepath), "%s",
+             filepath ? filepath : "unknown");
+    memcpy(sec.installed.sha256, sha256, 32);
+    sec.installed.length = length;
+    sec.correlation_id = (correlation_id && correlation_id[0]) ? correlation_id : NULL;
+    sec.success = success;
+
+    ESP_LOGW(TAG, "reporting SECONDARY bundle %s (%s) cid=%s", filepath,
+             success ? "SUCCESS" : "FAILURE", correlation_id ? correlation_id : "(none)");
+    /* Primary correlation NULL (this manifest completes the SECONDARY's update). */
+    err = post_manifest(&creds, NULL, pk, sk, &primary, NULL, true, &sec);
+    aktualino_store_free_creds(&creds);
+    return err;
+}
+#endif
 
 esp_err_t aktualino_prov_report_failed(const char *hardware_id,
                                        const char *correlation_id)
@@ -695,7 +805,7 @@ esp_err_t aktualino_prov_report_failed(const char *hardware_id,
              correlation_id ? correlation_id : "(none)");
     err = post_manifest(&creds, NULL, pk, sk, &inst,
                         (correlation_id && correlation_id[0]) ? correlation_id : NULL,
-                        false);
+                        false, NULL);
     aktualino_store_free_creds(&creds);
     return err;
 }

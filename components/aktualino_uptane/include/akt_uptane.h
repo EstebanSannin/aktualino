@@ -44,6 +44,29 @@ typedef struct {
 } akt_target_t;
 
 /*
+ * A second ECU's version report, for the optional Berry script secondary
+ * (docs/berry-secondary-spec.md §2). The secondary reuses the primary's Ed25519
+ * key (its clientKey is registered identically), so the same (pk, sk) signs both
+ * nested EcuManifests. `installed` is the currently-installed bundle image
+ * (filepath/sha256/length); a device with no bundle yet reports the empty-image
+ * placeholder — filepath "unknown", length 0, sha256 of the empty string.
+ */
+typedef struct {
+    const char  *ecu_serial;        /* the secondary's ecu_serial (e.g. "…-lua") */
+    akt_target_t installed;         /* installed bundle image (or empty placeholder) */
+    const char  *attacks_detected;  /* "" or a cause (API-mismatch/quarantine/rollback) */
+    /*
+     * Report-back for a SECONDARY install (spec §14.7). When correlation_id is
+     * non-NULL/non-empty, the manifest's installation_report is scoped to THIS
+     * secondary (result item for its ecu_serial, report.correlation_id = the
+     * secondary target's correlation id) so Torizon completes the secondary
+     * update. Leave NULL for a heartbeat manifest (installed_image only).
+     */
+    const char  *correlation_id;
+    bool         success;           /* the secondary install result, when correlation_id set */
+} akt_secondary_t;
+
+/*
  * Verify a signed role envelope against trusted root metadata.
  *   root_signed : parsed `signed` object of root.json ({keys, roles, ...})
  *   role_name   : "root" | "targets" | "snapshot" | "timestamp"
@@ -148,6 +171,24 @@ char *akt_build_manifest_report(const char *primary_ecu_serial,
                                 const char *correlation_id, bool success,
                                 const uint8_t ecu_pk[32], const uint8_t ecu_sk[64],
                                 size_t *out_len);
+
+/*
+ * As akt_build_manifest_report, but when `secondary` is non-NULL the manifest
+ * carries a SECOND ecu_version_manifests entry (keyed by secondary->ecu_serial) —
+ * a nested EcuManifest signed by the SAME ECU key (key reuse, spec §3). Passing
+ * secondary=NULL reproduces the single-ECU manifest byte-for-byte, so the
+ * existing builders delegate here. The installation_report, when emitted, still
+ * scopes result.items to the primary ecu (a bundle install's own report shape is
+ * pinned in S2/S4); a heartbeat manifest (correlation_id NULL) just reports both
+ * ECUs' installed images.
+ */
+char *akt_build_manifest_ex(const char *primary_ecu_serial,
+                            const akt_target_t *installed,
+                            const char *attacks_detected,
+                            const char *correlation_id, bool success,
+                            const akt_secondary_t *secondary,
+                            const uint8_t ecu_pk[32], const uint8_t ecu_sk[64],
+                            size_t *out_len);
 
 #ifdef __cplusplus
 }
