@@ -48,6 +48,18 @@ fits on a classic ESP32 with room to spare.
   relay, small logic — without recompiling the firmware. See
   [`docs/bundles.md`](docs/bundles.md).
 
+## Setup portal
+
+A shell-less board with no Wi-Fi boots as its own access point (`aktualino-<mac6>`) and
+serves a self-contained captive page — join it from a phone, pick Wi-Fi, and the board
+enrolls itself to Torizon Cloud. No app to install, ~7 KB gzipped, works offline on the AP.
+
+| Pick Wi-Fi | Cloud enrollment | Provisioning | Done |
+|:--:|:--:|:--:|:--:|
+| ![Wi-Fi selection](docs/img/portal-wifi.png) | ![Cloud enrollment](docs/img/portal-enroll.png) | ![Provisioning in progress](docs/img/portal-provisioning.png) | ![Board provisioned](docs/img/portal-done.png) |
+
+<sub>Screenshots rendered from the on-device page (`components/aktualino_portal/www/portal.html`) with placeholder Wi-Fi/device data.</sub>
+
 ## Proof points
 
 Proven end-to-end on real hardware (classic ESP32) against real Torizon Cloud:

@@ -74,6 +74,11 @@ clients; keep them straight:
   headlessly. First-class and shipped, for people who prefer a command over a portal.
 
 ## On-device SoftAP portal (`components/aktualino_portal`)
+
+| Pick Wi-Fi | Board provisioned |
+|:--:|:--:|
+| ![setup portal — Wi-Fi selection](img/portal-wifi.png) | ![setup portal — provisioned](img/portal-done.png) |
+
 Boot decision (`main/aktualino_main.c`): **provisioned** → poll loop; else **Wi-Fi creds known**
 (NVS, written by the portal/CLI, else a build-time fallback) → connect + self-enrol; else → **start
 the SoftAP portal**. On success the board reboots into the normal poll loop. A stubbed
