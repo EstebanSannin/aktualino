@@ -20,4 +20,6 @@ idf_component_register(
         mbedtls
         esp_partition
         spi_flash
+        driver         # real GPIO for the script host API
+        esp_timer      # millis()
 )

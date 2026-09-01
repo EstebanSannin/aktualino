@@ -235,35 +235,46 @@ components/
   (reuses) aktualino_uptane / _crypto / _net / _store / _core   — verification + delivery unchanged
 ```
 
-- **Dedicated FreeRTOS task**, lower priority than the OTA/core task, so a busy script never starves
-  provisioning/polling/TLS. Its own stack (internal SRAM, small); the **Berry VM heap lives in PSRAM**
-  (via a custom Berry allocator), so scripts never compete with the mbedTLS/OTA working set. Both the
-  S3 and the WROVER dev board have PSRAM (§10, §12).
-- **Scheduler = host-called entrypoints.** `setup()` once after (re)load; `loop()` on a tick. No
-  script-owned blocking loop, so a missing yield can't wedge the system.
-- **Per-`loop()` CPU budget** via Berry's instruction-count hook: a `loop()` that exceeds the budget
-  is aborted for that tick (counts as a fault, §8). Bounds worst-case latency deterministically.
-- **Timers** are host-managed: the scheduler dispatches script timer callbacks from the same task, so
-  all Berry execution is single-threaded and needs no locking against itself.
+- **Dedicated FreeRTOS task (IMPLEMENTED)**, lower priority than the OTA/core task, so a busy script
+  never starves provisioning/polling/TLS. The installed bundle runs in one long-lived VM; the task
+  calls its `loop()` every `SCRIPT_TICK_MS` (500 ms). A new bundle is validated (compile + `setup()` +
+  a few `loop()`s), stored, then swapped in as the new live VM under a mutex (a lightweight
+  keep-last-good — the old bundle keeps running until the new one validates). The **Berry VM heap
+  comes from the general heap, which is PSRAM-backed** on these boards (`CONFIG_SPIRAM_USE_MALLOC`), so
+  scripts don't compete with the mbedTLS/OTA working set. Both the S3 and the WROVER dev board have
+  PSRAM (§10, §12).
+- **Scheduler = host-called entrypoints (IMPLEMENTED).** `setup()` once when a bundle becomes live;
+  `loop()` on each tick. No script-owned blocking loop, so a missing yield can't wedge the system.
+- **Per-`loop()` CPU budget (PLANNED, S4)** via Berry's instruction-count hook (`be_set_obs_hook` /
+  `be_setntvhook` + `be_raise`): a `loop()` that exceeds the budget is aborted for that tick (counts as
+  a fault, §8). Today a runaway `loop()` only stalls the low-priority script task, not the OTA client.
+- **Quarantine (IMPLEMENTED, §8):** after `SCRIPT_MAX_FAULTS` (3) consecutive `loop()` errors the task
+  stops calling `loop()` (VM kept). **Timers** (`timer.every`, …) are **PLANNED (S4+)**; scripts time
+  themselves across `loop()` ticks with `millis()`.
 
 ---
 
-## 7. Host API surface (MVP)
+## 7. Host API surface
 
-Full API, **no allowlist** (MVP decision). Exposed as Berry modules/functions (names indicative):
+Full API, **no allowlist** (MVP decision) — only a flash-pin guard (GPIO 6–11 refused) so a demo
+script cannot brick the board. Bindings are **flat global functions** (Berry has no dotted module here
+yet), registered on the VM per bundle.
 
-| Area | API (indicative) | Notes |
-|---|---|---|
-| Digital GPIO | `gpio.set(pin, level)`, `gpio.get(pin) -> level`, `gpio.mode(pin, IN/OUT)` | the "toggle a relay/LED" capability |
-| Analog | `adc.read(channel) -> raw`, optional `adc.millivolts(channel)` | "read a sensor" (analog) |
-| I2C | `i2c.write(addr, bytes)`, `i2c.read(addr, n) -> bytes`, `i2c.wreg/rreg` helpers | "read a sensor" (digital bus); a couple of built-in drivers can layer on later |
-| Timers / sched | `timer.after(ms, fn)`, `timer.every(ms, fn)`, `timer.cancel(h)` | host-dispatched; no busy-wait |
-| Persistent KV | `store.get(key[,default])`, `store.set(key, val)`, `store.del(key)` | bundle-scoped, survives reboot; backed by the `scripts` partition (§10) |
-| Report | `report(name, value)` | pushes a named value into the manifest/telemetry channel (§8) — closes the sensor→cloud loop |
-| Lifecycle | `health_ok()`, `log(level, msg)` | `health_ok()` is the confirm gate (§8) |
+**Implemented today (S3):**
 
-**Post-MVP:** PWM, SPI, raw sockets, deep-sleep, and the firmware-side capability allowlist that
-makes `caps` enforceable rather than advisory.
+| Function | Effect |
+|---|---|
+| `gpio_mode(pin, mode)` | set pin direction — `mode` 0 = input, 1 = output, 2 = input-pullup |
+| `gpio_set(pin, level)` | drive a pin (forces output); `level` 0/1 — the "toggle a relay/LED" capability |
+| `gpio_get(pin) -> 0/1` | read a pin |
+| `millis() -> int` | milliseconds since boot (scripts time themselves across `loop()` ticks) |
+| `report(name, value)` | log a named value (a real telemetry/manifest uplink is future) |
+| `health_ok()` | signal healthy (logged; not yet required by the MVP install gate — §8) |
+| `log(msg)` | log a line |
+
+**Planned (S4+):** `adc_read(channel)`, I2C (`i2c_write/read`), timers (`timer_every`), a persistent KV
+store (`store_get/set`), PWM, SPI; plus the firmware-side **capability allowlist** that turns the
+flash-pin guard into a full pin/bus policy (`caps` enforced rather than advisory).
 
 ---
 

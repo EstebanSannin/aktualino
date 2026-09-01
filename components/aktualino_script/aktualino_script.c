@@ -1,10 +1,21 @@
 /*
  * aktualino_script.c — Berry script secondary: install + run + report.
- * See aktualino_script.h. MVP storage is raw `scripts`-partition writes (a
- * single "current" slot); LittleFS + KV store + a previous/rollback slot are
- * deferred (spec §10/§13/S4). MVP install-success gate = the bundle loads and
- * survives setup() + the first loop()s without error (the load+first-cycle gate);
- * the health_ok() heartbeat is logged but not yet required (that + rollback is S4).
+ * See aktualino_script.h.
+ *
+ * Runtime model: the installed bundle runs in ONE long-lived VM ("live"), and a
+ * dedicated low-priority FreeRTOS task ticks its loop() every SCRIPT_TICK_MS, so
+ * scripts run continuously (not just once at boot). setup() runs once when a
+ * bundle becomes live. A new bundle is validated (compile + setup() + a few
+ * loop()s without error), stored verbatim in the `scripts` partition, then
+ * swapped in as the new live VM (the previous live VM is only replaced once the
+ * new one validates — a lightweight keep-last-good). After SCRIPT_MAX_FAULTS
+ * consecutive loop() errors the bundle is quarantined (loop() stops; VM kept).
+ *
+ * MVP scope (S3): storage is a raw single "current" slot (LittleFS + KV + a
+ * previous slot are S4/S5); the install-success gate is load+setup+first-loops
+ * (the health_ok() heartbeat is logged, not required, until S4); there is no
+ * capability allowlist yet (full host API), only a flash-pin guard so a demo
+ * script cannot brick the board. Per-loop CPU budget is S4.
  */
 #include "sdkconfig.h"
 #if CONFIG_AKTUALINO_SCRIPT_SECONDARY   /* whole file is empty when the feature is off */
@@ -17,7 +28,12 @@
 #include "esp_log.h"
 #include "esp_partition.h"
 #include "esp_heap_caps.h"
+#include "esp_timer.h"
 #include "mbedtls/sha256.h"
+#include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "aktualino_core.h"
 #include "aktualino_net.h"
@@ -26,6 +42,9 @@
 #include "aktualino_berry.h"
 
 static const char *TAG = "akt_script";
+
+#define SCRIPT_TICK_MS   500     /* loop() cadence for the live bundle */
+#define SCRIPT_MAX_FAULTS 3      /* consecutive loop() errors -> quarantine (spec §8) */
 
 #define BUNDLE_MAGIC   0xAB71B0DEu
 #define HDR_OFFSET     0x0000
@@ -91,9 +110,19 @@ static uint8_t *store_read(size_t *out_len)
     return buf;
 }
 
-/* ------------------------------------------------------ Berry host API + run */
+/* -------------------------------------------------------- Berry host API */
 
 static volatile int s_health_ok;
+
+/* Flash-pin guard (brick-prevention, not a full allowlist — that is S4/S5): a
+ * script must never drive the SPI-flash pins. Conservative bounds cover both
+ * targets; refuse GPIO 6-11 (classic flash) and out-of-range. */
+static bool pin_ok(bint pin)
+{
+    if (pin < 0 || pin > 48) return false;
+    if (pin >= 6 && pin <= 11) return false;   /* SPI flash — never touch */
+    return true;
+}
 
 static int l_log(bvm *vm) {
     ESP_LOGI("bundle", "%s", be_top(vm) >= 1 ? be_tostring(vm, 1) : "");
@@ -103,49 +132,122 @@ static int l_report(bvm *vm) {
     int t = be_top(vm);
     const char *n = (t >= 1) ? be_tostring(vm, 1) : "?";
     long long v = (t >= 2 && be_isint(vm, 2)) ? (long long)be_toint(vm, 2) : 0;
-    ESP_LOGI("bundle", "report %s=%lld", n, v);
+    ESP_LOGI("bundle", "report %s=%lld", n, v);       /* telemetry uplink is future */
     be_return_nil(vm);
 }
 static int l_health_ok(bvm *vm) { s_health_ok = 1; be_return_nil(vm); }
-static int l_gpio_set(bvm *vm) {
-    if (be_top(vm) >= 2 && be_isint(vm, 1) && be_isint(vm, 2))
-        ESP_LOGI("bundle", "gpio pin %lld <- %lld",
-                 (long long)be_toint(vm, 1), (long long)be_toint(vm, 2));
+
+static int l_gpio_mode(bvm *vm) {
+    if (be_top(vm) >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+        bint pin = be_toint(vm, 1), m = be_toint(vm, 2);
+        if (pin_ok(pin)) {
+            gpio_reset_pin((gpio_num_t)pin);
+            gpio_set_direction((gpio_num_t)pin, m == 1 ? GPIO_MODE_OUTPUT : GPIO_MODE_INPUT);
+            if (m == 2) gpio_set_pull_mode((gpio_num_t)pin, GPIO_PULLUP_ONLY);
+        } else ESP_LOGW("bundle", "gpio_mode refused pin %lld", (long long)pin);
+    }
     be_return_nil(vm);
 }
+static int l_gpio_set(bvm *vm) {
+    if (be_top(vm) >= 2 && be_isint(vm, 1) && be_isint(vm, 2)) {
+        bint pin = be_toint(vm, 1), lvl = be_toint(vm, 2);
+        if (pin_ok(pin)) {
+            gpio_set_direction((gpio_num_t)pin, GPIO_MODE_OUTPUT);
+            gpio_set_level((gpio_num_t)pin, lvl ? 1 : 0);
+        } else ESP_LOGW("bundle", "gpio_set refused pin %lld", (long long)pin);
+    }
+    be_return_nil(vm);
+}
+static int l_gpio_get(bvm *vm) {
+    bint pin = (be_top(vm) >= 1 && be_isint(vm, 1)) ? be_toint(vm, 1) : -1;
+    be_pushint(vm, pin_ok(pin) ? gpio_get_level((gpio_num_t)pin) : 0);
+    be_return(vm);
+}
+static int l_millis(bvm *vm) {
+    be_pushint(vm, (bint)(esp_timer_get_time() / 1000));   /* ms since boot */
+    be_return(vm);
+}
 
-/*
- * Load + run a bundle. MVP success = compiles, setup() and the first `loops`
- * loop() cycles run without error. Sets *health to whether health_ok() fired.
- */
-static bool run_bundle(const uint8_t *buf, size_t len, int loops, bool *health)
+static void register_api(akt_berry_t *rt)
 {
-    s_health_ok = 0;
-    akt_berry_t *rt = akt_berry_new();
-    if (!rt) { ESP_LOGE(TAG, "berry: vm alloc failed"); return false; }
     akt_berry_register(rt, "log",       l_log);
     akt_berry_register(rt, "report",    l_report);
     akt_berry_register(rt, "health_ok", l_health_ok);
+    akt_berry_register(rt, "gpio_mode", l_gpio_mode);
     akt_berry_register(rt, "gpio_set",  l_gpio_set);
+    akt_berry_register(rt, "gpio_get",  l_gpio_get);
+    akt_berry_register(rt, "millis",    l_millis);
+}
 
-    bool ok = true;
+/*
+ * Validate a bundle: compile + setup() + the first `loops` loop() cycles without
+ * error. On success returns a LIVE VM (setup already run) the caller promotes via
+ * set_live(); on failure frees it and returns NULL. Sets *health = did health_ok().
+ */
+static akt_berry_t *validate_bundle(const uint8_t *buf, size_t len, int loops, bool *health)
+{
+    s_health_ok = 0;
+    akt_berry_t *rt = akt_berry_new();
+    if (!rt) { ESP_LOGE(TAG, "berry: vm alloc failed"); return NULL; }
+    register_api(rt);
     if (akt_berry_load(rt, "bundle", buf, len) != 0) {
         ESP_LOGE(TAG, "bundle load failed: %s", akt_berry_last_error(rt));
-        ok = false;
+        akt_berry_free(rt); return NULL;
     }
-    if (ok && akt_berry_call(rt, "setup") == AKT_BERRY_ERROR) {
+    if (akt_berry_call(rt, "setup") == AKT_BERRY_ERROR) {
         ESP_LOGE(TAG, "bundle setup() error: %s", akt_berry_last_error(rt));
-        ok = false;
+        akt_berry_free(rt); return NULL;
     }
-    for (int i = 0; ok && i < loops; i++) {
+    for (int i = 0; i < loops; i++) {
         if (akt_berry_call(rt, "loop") == AKT_BERRY_ERROR) {
             ESP_LOGE(TAG, "bundle loop() error: %s", akt_berry_last_error(rt));
-            ok = false;
+            akt_berry_free(rt); return NULL;
         }
     }
     if (health) *health = s_health_ok;
-    akt_berry_free(rt);
-    return ok;
+    return rt;
+}
+
+/* ------------------------------------------------------ live VM + scheduler */
+
+static akt_berry_t     *s_rt;          /* the currently-running bundle's VM */
+static SemaphoreHandle_t s_lock;       /* guards s_rt / faults across tasks  */
+static int              s_faults;      /* consecutive loop() faults          */
+static bool             s_quarantined; /* loop() stopped after too many faults */
+
+/* Promote a validated VM to live, freeing the previous one (keep-last-good:
+ * the old bundle keeps running until the new one validates). */
+static void set_live(akt_berry_t *rt)
+{
+    xSemaphoreTake(s_lock, portMAX_DELAY);
+    if (s_rt) akt_berry_free(s_rt);
+    s_rt = rt;
+    s_faults = 0;
+    s_quarantined = false;
+    xSemaphoreGive(s_lock);
+}
+
+/* Dedicated task: tick the live bundle's loop() every SCRIPT_TICK_MS. */
+static void script_task(void *arg)
+{
+    (void)arg;
+    for (;;) {
+        vTaskDelay(pdMS_TO_TICKS(SCRIPT_TICK_MS));
+        xSemaphoreTake(s_lock, portMAX_DELAY);
+        if (s_rt && !s_quarantined) {
+            if (akt_berry_call(s_rt, "loop") == AKT_BERRY_ERROR) {
+                ESP_LOGE(TAG, "loop() error: %s", akt_berry_last_error(s_rt));
+                if (++s_faults >= SCRIPT_MAX_FAULTS) {
+                    s_quarantined = true;
+                    ESP_LOGE(TAG, "bundle QUARANTINED after %d loop() faults — "
+                                  "loop() stopped (VM kept)", SCRIPT_MAX_FAULTS);
+                }
+            } else {
+                s_faults = 0;
+            }
+        }
+        xSemaphoreGive(s_lock);
+    }
 }
 
 /* --------------------------------------------------------------- download */
@@ -218,17 +320,28 @@ esp_err_t aktualino_script_init(void)
     }
     ESP_LOGI(TAG, "scripts partition @0x%06lx size %lu KB",
              (unsigned long)s_part->address, (unsigned long)(s_part->size / 1024));
+    s_lock = xSemaphoreCreateMutex();
+    if (!s_lock) return ESP_ERR_NO_MEM;
+
+    /* Activate any already-installed bundle as the live VM. */
     size_t len = 0;
     uint8_t *buf = store_read(&len);
     if (buf) {
         bool health = false;
-        bool ok = run_bundle(buf, len, 3, &health);
-        ESP_LOGI(TAG, "boot-run stored bundle (%zu B): %s%s", len,
-                 ok ? "ok" : "ERROR", health ? " +health" : "");
+        akt_berry_t *rt = validate_bundle(buf, len, 1, &health);
         free(buf);
+        if (rt) {
+            set_live(rt);
+            ESP_LOGI(TAG, "stored bundle is LIVE (%zu B)%s", len, health ? " +health" : "");
+        } else {
+            ESP_LOGE(TAG, "stored bundle failed to load — not running it");
+        }
     } else {
         ESP_LOGI(TAG, "no bundle installed yet");
     }
+
+    /* Start the scheduler that ticks loop() continuously. */
+    xTaskCreate(script_task, "akt_script", 8192, NULL, 3, NULL);
     return ESP_OK;
 }
 
@@ -280,10 +393,11 @@ esp_err_t aktualino_script_poll(int64_t now)
         return err;
     }
 
-    /* Run it (MVP gate: loads + setup + first loops without error). */
+    /* Validate (MVP gate: loads + setup + first loops without error). The
+     * validated VM becomes live only after we commit to flash below. */
     bool health = false;
-    bool ran = run_bundle(buf, len, 5, &health);
-    if (!ran) {
+    akt_berry_t *rt = validate_bundle(buf, len, 5, &health);
+    if (!rt) {
         ESP_LOGE(TAG, "bundle failed to run — NOT installing; reporting failure");
         free(buf);
         aktualino_prov_report_secondary(res.target_path, res.target_sha256,
@@ -291,16 +405,18 @@ esp_err_t aktualino_script_poll(int64_t now)
         return ESP_FAIL;
     }
 
-    /* Commit to flash + report success. */
+    /* Commit to flash, then swap in the new bundle as the live VM. */
     err = store_write(res.target_path, res.target_sha256, buf, len);
     free(buf);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "bundle store_write failed: %s", esp_err_to_name(err));
+        akt_berry_free(rt);
         aktualino_prov_report_secondary(res.target_path, res.target_sha256,
                                         res.target_length, corr, false);
         return err;
     }
-    ESP_LOGW(TAG, "BUNDLE INSTALLED: %s (%zu B, health=%d) — reporting success",
+    set_live(rt);   /* the new bundle now runs continuously via the scheduler */
+    ESP_LOGW(TAG, "BUNDLE INSTALLED + LIVE: %s (%zu B, health=%d) — reporting success",
              res.target_path, len, health);
     return aktualino_prov_report_secondary(res.target_path, res.target_sha256,
                                            res.target_length, corr, true);
