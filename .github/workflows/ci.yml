@@ -6,8 +6,25 @@ name: CI
 on:
   push:
     branches: [main]
+    # Only build when something that affects the firmware/tests changes — a
+    # docs-, web-, or README-only push to main doesn't need a full build.
+    # (PRs are left unfiltered so every PR still gets the full gate.)
+    paths:
+      - 'main/**'
+      - 'components/**'
+      - 'sdkconfig*'
+      - 'partitions*'
+      - 'CMakeLists.txt'
+      - 'test/**'
+      - 'tools/run-host-tests.sh'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
+
+# A newer commit on the same ref cancels the in-flight run instead of piling up.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -17,7 +34,7 @@ jobs:
     name: Host unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install host deps
         run: |
           sudo apt-get update
@@ -39,7 +56,7 @@ jobs:
           - { target: esp32s3, variant: plain }
           - { target: esp32s3, variant: berry }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: idf.py build
         shell: bash
         run: |
@@ -53,7 +70,7 @@ jobs:
           args+=(set-target "${{ matrix.target }}" build)
           idf.py "${args[@]}"
       - name: Upload firmware artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: aktualino-${{ matrix.target }}-${{ matrix.variant }}
           path: build-${{ matrix.target }}-${{ matrix.variant }}/aktualino.bin

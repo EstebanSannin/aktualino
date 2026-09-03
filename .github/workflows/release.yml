@@ -23,7 +23,7 @@ jobs:
     name: Host unit tests (gate)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install host deps
         run: |
           sudo apt-get update
@@ -46,7 +46,7 @@ jobs:
           - { target: esp32s3, variant: plain }
           - { target: esp32s3, variant: berry }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build then merge into a single flash-at-0x0 image
         shell: bash
         run: |
@@ -68,7 +68,7 @@ jobs:
           ( cd "$BD" && esptool.py --chip "$T" merge_bin \
               -o "$GITHUB_WORKSPACE/dist/aktualino-$T-$V-$VER.bin" @flash_args )
       - name: Upload merged image
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist-${{ matrix.target }}-${{ matrix.variant }}
           path: dist/aktualino-*.bin
@@ -79,9 +79,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Collect merged images
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: dist-*
           path: dist
@@ -103,7 +103,7 @@ jobs:
           sed "s/{{VERSION}}/$VER/g" web/manifest-berry.json.tmpl > site/manifest-berry.json
           sed "s/{{VERSION}}/$VER/g" web/index.html > site/index.html
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
@@ -116,4 +116,4 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

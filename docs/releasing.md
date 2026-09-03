@@ -46,6 +46,16 @@ and updates the flasher at `https://estebansannin.github.io/aktualino/`.
 
 - **Enable Pages from Actions:** repo **Settings → Pages → Build and deployment →
   Source: GitHub Actions**.
+- **Allow tags to deploy to Pages:** **Settings → Environments → `github-pages` →
+  "Deployment branches and tags"** → add a **tag** rule `v*` (or "No
+  restriction"). That environment defaults to the *default branch only*, so a
+  tag-triggered release deploy is rejected with *"Tag vX.Y.Z is not allowed to
+  deploy to github-pages"* until this is set. (Gotcha hit on the first release.)
+- **`workflow` token scope to push these files:** pushing anything under
+  `.github/workflows/` requires a credential with the `workflow` scope, else the
+  push is rejected (*"refusing to allow an OAuth App to … workflow … without
+  `workflow` scope"*). With the GitHub CLI: `gh auth refresh -h github.com -s
+  workflow`, or use a PAT / SSH key that has it. (Gotcha hit on the first push.)
 - **No secrets to configure.** The workflows use the automatic `GITHUB_TOKEN`;
   each grants only what it needs via a `permissions:` block (`contents: write`
   for the release, `pages: write` + `id-token: write` for the deploy). The built
