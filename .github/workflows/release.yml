@@ -1,0 +1,119 @@
+name: Release
+
+# Cut a release by pushing a version tag:  git tag v0.2.0 && git push origin v0.2.0
+# Pipeline: host-test gate -> build all 4 variants at the tag version -> merge
+# each into one flash-at-0x0 image -> GitHub Release (bins + SHA256SUMS) ->
+# deploy the ESP Web Tools flasher to GitHub Pages.
+#
+# No secrets: the public images carry none, so CI only needs the automatic
+# GITHUB_TOKEN. Tag names come from maintainers pushing tags (trusted); run
+# scripts still take the ref from the built-in $GITHUB_REF_NAME env var and quote
+# it, never interpolating event data into the shell.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # create the GitHub Release
+  pages: write      # deploy to GitHub Pages
+  id-token: write   # OIDC auth for the Pages deploy
+
+jobs:
+  host-tests:
+    name: Host unit tests (gate)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential cmake libsodium-dev libcjson-dev libmbedtls-dev libssl-dev python3
+      - name: Build + run the CTest suite
+        run: tools/run-host-tests.sh
+
+  build:
+    name: Build + merge ${{ matrix.target }} (${{ matrix.variant }})
+    needs: host-tests
+    runs-on: ubuntu-latest
+    container: espressif/idf:release-v5.4
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: esp32,   variant: plain }
+          - { target: esp32,   variant: berry }
+          - { target: esp32s3, variant: plain }
+          - { target: esp32s3, variant: berry }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build then merge into a single flash-at-0x0 image
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
+          VER="${GITHUB_REF_NAME#v}"          # v0.2.0 -> 0.2.0
+          export AKT_APP_VERSION="$VER"        # -> esp_app_desc.version
+          T="${{ matrix.target }}"; V="${{ matrix.variant }}"
+          BD="build-$T-$V"
+          # Array keeps the ';'-separated SDKCONFIG_DEFAULTS as one idf.py arg.
+          args=(-B "$BD")
+          if [ "$V" = "berry" ]; then
+            args+=("-DSDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.$T;sdkconfig.berry.$T")
+          fi
+          args+=(set-target "$T" build)
+          idf.py "${args[@]}"
+          # The build's flash_args carries the per-target bootloader offset
+          # (esp32 0x1000, esp32s3 0x0), so @flash_args merges correctly for both.
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          ( cd "$BD" && esptool.py --chip "$T" merge_bin \
+              -o "$GITHUB_WORKSPACE/dist/aktualino-$T-$V-$VER.bin" @flash_args )
+      - name: Upload merged image
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.target }}-${{ matrix.variant }}
+          path: dist/aktualino-*.bin
+          if-no-files-found: error
+
+  release:
+    name: Publish release + assemble flasher
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect merged images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum *.bin | tee SHA256SUMS
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.bin dist/SHA256SUMS \
+            --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+      - name: Assemble the web flasher (inject version, bundle images)
+        run: |
+          VER="${GITHUB_REF_NAME#v}"
+          mkdir -p site
+          cp dist/*.bin site/
+          sed "s/{{VERSION}}/$VER/g" web/manifest-plain.json.tmpl > site/manifest-plain.json
+          sed "s/{{VERSION}}/$VER/g" web/manifest-berry.json.tmpl > site/manifest-berry.json
+          sed "s/{{VERSION}}/$VER/g" web/index.html > site/index.html
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    name: Deploy flasher to GitHub Pages
+    needs: release
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

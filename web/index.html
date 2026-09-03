@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flash Aktualino</title>
+<!-- ESP Web Tools: in-browser flashing over WebSerial (no toolchain needed). -->
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+  :root { color-scheme: light dark; --fg:#1a1a1a; --muted:#5a5a5a; --bg:#fafafa; --card:#fff; --line:#e4e4e4; --accent:#2b6cb0; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fg:#e8e8e8; --muted:#a0a0a0; --bg:#161616; --card:#1f1f1f; --line:#333; --accent:#63b3ed; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.55 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1 { font-size: 1.9rem; margin: 0 0 .25rem; letter-spacing:-.01em; }
+  .tag { color: var(--muted); margin: 0 0 1.75rem; }
+  .ver { display:inline-block; font-size:.8rem; color:var(--muted); border:1px solid var(--line);
+         border-radius:999px; padding:.1rem .6rem; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:1.25rem 1.35rem; margin:1rem 0; }
+  .card h2 { font-size:1.1rem; margin:0 0 .35rem; }
+  .card p { color:var(--muted); margin:.2rem 0 1rem; }
+  esp-web-install-button { --esp-tools-button-color:#fff; --esp-tools-button-bg-color:var(--accent); }
+  .fallback { font-size:.82rem; color:var(--muted); }
+  .note { background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent);
+          border-radius:8px; padding:.9rem 1.1rem; margin:1.5rem 0; font-size:.9rem; }
+  ol { padding-left:1.2rem; } li { margin:.3rem 0; }
+  a { color:var(--accent); }
+  code { background:rgba(128,128,128,.16); padding:.08em .4em; border-radius:4px; font-size:.9em; }
+  footer { margin-top:2.5rem; color:var(--muted); font-size:.82rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Flash Aktualino</h1>
+  <p class="tag">A tiny two-repo Uptane/TUF OTA client for the ESP32 &amp; ESP32-S3.
+     <span class="ver">version {{VERSION}}</span></p>
+
+  <p>Plug your board in over USB and click <strong>Connect</strong>. The flasher
+     auto-detects an ESP32 or ESP32-S3. These are the <strong>no-secrets public
+     images</strong>: after flashing, the board opens its own Wi-Fi setup portal —
+     nothing is baked in.</p>
+
+  <div class="card">
+    <h2>Aktualino — standard</h2>
+    <p>The core two-repo OTA client + SoftAP setup portal. Start here.</p>
+    <esp-web-install-button manifest="./manifest-plain.json">
+      <button slot="activate">Connect &amp; install (standard)</button>
+      <span slot="unsupported" class="fallback">Your browser can't flash — use desktop Chrome, Edge, or Opera.</span>
+      <span slot="not-allowed" class="fallback">You must allow serial access to flash.</span>
+    </esp-web-install-button>
+  </div>
+
+  <div class="card">
+    <h2>Aktualino — with Berry script secondary</h2>
+    <p>Adds the optional <a href="https://github.com/berry-lang/berry">Berry</a>
+       script secondary: deploy small scripts over the air as their own
+       two-repo-verified Uptane target. Needs a bundle assigned to do anything.</p>
+    <esp-web-install-button manifest="./manifest-berry.json">
+      <button slot="activate">Connect &amp; install (Berry)</button>
+      <span slot="unsupported" class="fallback">Your browser can't flash — use desktop Chrome, Edge, or Opera.</span>
+      <span slot="not-allowed" class="fallback">You must allow serial access to flash.</span>
+    </esp-web-install-button>
+  </div>
+
+  <div class="note">
+    <strong>After flashing — set it up:</strong>
+    <ol>
+      <li>On a phone or laptop, join the open Wi-Fi <code>aktualino-&lt;xxxxxx&gt;</code> the board broadcasts.</li>
+      <li>The captive setup page opens automatically (or browse <code>http://192.168.4.1/</code>).</li>
+      <li>Pick your Wi-Fi and paste a Torizon Cloud provisioning credential; the board enrolls itself.</li>
+    </ol>
+    See <a href="https://github.com/EstebanSannin/aktualino/blob/main/docs/provisioning.md">docs/provisioning.md</a> for the full flow.
+  </div>
+
+  <p class="fallback">Prefer the command line? Every release also ships the raw
+     <code>.bin</code> images + <code>SHA256SUMS</code> on the
+     <a href="https://github.com/EstebanSannin/aktualino/releases">releases page</a>,
+     flashable with <code>esptool.py</code> (see the release notes).</p>
+
+  <footer>
+    Aktualino is Apache-2.0. Flashing runs entirely in your browser over WebSerial —
+    the firmware never leaves your machine except onto your board.
+    &middot; <a href="https://github.com/EstebanSannin/aktualino">Source on GitHub</a>
+  </footer>
+</div>
+</body>
+</html>

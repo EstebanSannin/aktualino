@@ -60,6 +60,24 @@ enrolls itself to Torizon Cloud. No app to install, ~7 KB gzipped, works offline
 
 <sub>Screenshots rendered from the on-device page (`components/aktualino_portal/www/portal.html`) with placeholder Wi-Fi/device data.</sub>
 
+## Download & flash
+
+No toolchain needed. Plug in an ESP32 or ESP32-S3 and flash a **tested,
+no-secrets** build straight from your browser:
+
+**→ [Flash Aktualino in your browser](https://estebansannin.github.io/aktualino/)**
+(desktop Chrome / Edge / Opera; auto-detects ESP32 vs ESP32-S3)
+
+Every tagged release is built and host-tested by CI, then published with a
+click-to-flash [ESP Web Tools](https://esphome.github.io/esp-web-tools/) page and
+raw `.bin` images + `SHA256SUMS` on the
+[releases page](https://github.com/EstebanSannin/aktualino/releases) for
+`esptool.py`. Two variants per chip — **standard** and **with the Berry script
+secondary**. The images carry no credentials: after flashing, the board opens its
+`aktualino-<mac6>` setup portal and you enrol it to Torizon Cloud (see
+[`docs/provisioning.md`](docs/provisioning.md)). Pipeline details:
+[`docs/releasing.md`](docs/releasing.md).
+
 ## Proof points
 
 Proven end-to-end on real hardware (classic ESP32) against real Torizon Cloud:
@@ -147,6 +165,7 @@ anti-rollback eFuse, on-device keygen + CSR) is tracked in
 - [`docs/engineering-notes.md`](docs/engineering-notes.md) — hard-won lessons and gotchas.
 - [`docs/hardening-todo.md`](docs/hardening-todo.md) — deferred security work.
 - [`DEMO.md`](DEMO.md) — reproducible build → provision → update runbook.
+- [`docs/releasing.md`](docs/releasing.md) — CI, tested release builds, and the web flasher.
 
 ## License
 
