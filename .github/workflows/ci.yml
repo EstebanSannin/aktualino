@@ -1,0 +1,60 @@
+name: CI
+
+# Push/PR gate: prove the portable core still verifies (host tests) and that the
+# tree still builds all four firmware variants from a CLEAN checkout (no
+# generated inputs / no secrets — exactly what this workflow clones).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  host-tests:
+    name: Host unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential cmake libsodium-dev libcjson-dev libmbedtls-dev libssl-dev python3
+      - name: Build + run the CTest suite
+        run: tools/run-host-tests.sh
+
+  firmware:
+    name: Build ${{ matrix.target }} (${{ matrix.variant }})
+    runs-on: ubuntu-latest
+    container: espressif/idf:release-v5.4
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: esp32,   variant: plain }
+          - { target: esp32,   variant: berry }
+          - { target: esp32s3, variant: plain }
+          - { target: esp32s3, variant: berry }
+    steps:
+      - uses: actions/checkout@v4
+      - name: idf.py build
+        shell: bash
+        run: |
+          . "$IDF_PATH/export.sh"
+          # Build args as an array so the ';'-separated SDKCONFIG_DEFAULTS list
+          # reaches idf.py as ONE argument (bash must not split it on ';').
+          args=(-B "build-${{ matrix.target }}-${{ matrix.variant }}")
+          if [ "${{ matrix.variant }}" = "berry" ]; then
+            args+=("-DSDKCONFIG_DEFAULTS=sdkconfig.defaults;sdkconfig.defaults.${{ matrix.target }};sdkconfig.berry.${{ matrix.target }}")
+          fi
+          args+=(set-target "${{ matrix.target }}" build)
+          idf.py "${args[@]}"
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: aktualino-${{ matrix.target }}-${{ matrix.variant }}
+          path: build-${{ matrix.target }}-${{ matrix.variant }}/aktualino.bin
+          if-no-files-found: error
