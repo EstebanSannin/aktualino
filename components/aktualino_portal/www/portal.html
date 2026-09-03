@@ -222,6 +222,7 @@
           <button class="btn ghost" id="back0" type="button">Back</button>
           <button class="btn primary grow" id="provision">Provision device</button>
         </div>
+        <div class="hint" id="submitErr" style="display:none;color:var(--crit)"></div>
       </div>
 
       <!-- STEP 3: STATUS / DONE -->
@@ -344,6 +345,7 @@
   $("provision").addEventListener('click',function(){
     var body={ssid:currentSsid(), password:$("pw").value, device_name:$("dname").value.trim()};
     if(credNeeded){body.credential=$("tok").value.trim();}
+    $("submitErr").style.display="none";
     go(2);
     // render status rows
     var s=$("status"); s.innerHTML="";
@@ -354,9 +356,24 @@
     });
     $("provision").disabled=true;
     api("/provision",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-      .then(function(){poll();})
+      .then(function(r){
+        // ok:false + provisioning:true = a duplicate submit; the first run is
+        // still live, so watch that one instead of bouncing back to the form.
+        if(r && r.ok===false && !r.provisioning){rejectSubmit(r.error);return;}
+        poll();
+      })
       .catch(function(){poll();});   // POST may drop as STA comes up; poll anyway
   });
+
+  // The board rejected the form outright (oversized or missing field): nothing
+  // was attempted, so return to step 2 with the reason rather than poll a status
+  // that will never move.
+  function rejectSubmit(msg){
+    go(1);
+    $("submitErr").textContent=msg||"The board rejected the submission.";
+    $("submitErr").style.display="block";
+    $("provision").disabled=false;
+  }
 
   function markRows(state,msg){
     var order=STAGES.map(function(x){return x.k;});
