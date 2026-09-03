@@ -87,13 +87,18 @@ factory-reset-to-AP hook (hold **BOOT/GPIO0**) clears identity + Wi-Fi + TUF and
 - **SoftAP**: open AP, device-unique SSID `aktualino-<mac6>` (e.g. `aktualino-e40398`). AP is OPEN
   for now — there is a clear `TODO(security)` for WPA2 + a per-device password + proof-of-possession.
 - **Captive page**: one embedded, gzipped, self-contained HTML page (system fonts, inline CSS/JS,
-  **~6.9 KB compressed**) served by `esp_http_server`, plus a captive DNS responder (every A query →
+  **~7.0 KB compressed**) served by `esp_http_server`, plus a captive DNS responder (every A query →
   the AP IP) and a 404→portal redirect so phones auto-open the "Sign in to Wi-Fi" sheet.
 - **Endpoints**: `GET /` (page), `GET /config` (backend + `credential_needed` → Path A/B + device
   readout), `GET /scan` (Wi-Fi scan JSON), `POST /provision` (`{ssid,password,credential?,
   device_name?}`), `GET /status` (`joining_wifi|sntp|requesting_creds|registering|verifying|done|
   error`). Path A vs B is decided by whether the board can self-provision without operator input:
   injected device creds (A1) or a baked Torizon client (A2) ⇒ `credential_needed:false`.
+- **Submission limits**: each `POST /provision` field has a fixed on-device buffer — SSID 32,
+  password 64, **credential 2047**, device name 47 characters. An overlong field is rejected with
+  `400` + `{"ok":false,"error":"<field> too long (max N characters)"}` and the page shows that on the
+  form; it is never truncated and provisioned with, which used to fail far downstream as an opaque
+  `401` from the credential handshake. A real Torizon provisioning token is ~1.3 KB.
 
 ### Dev-only bench build (Path A2 → Torizon Cloud, hardware-proven)
 `tools/sync-build.sh` generates `main/provision_client.h` from `secrets/torizon/extracted/`

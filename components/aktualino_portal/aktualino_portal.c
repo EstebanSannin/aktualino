@@ -280,27 +280,34 @@ static esp_err_t scan_get(httpd_req_t *req)
     return ESP_OK;
 }
 
-static void json_copy_str(const cJSON *o, const char *k, char *dst, size_t cap)
+/* Copies o[k] into dst (empty string if the key is absent or not a string), and
+ * returns false if the value does not fit. Callers must reject an overlong value
+ * rather than store a clipped one: a truncated provisioning credential still
+ * looks like a valid submission here and only surfaces much later, as an opaque
+ * 401 from the backend's credential handshake. */
+static bool json_copy_str(const cJSON *o, const char *k, char *dst, size_t cap)
 {
     dst[0] = '\0';
     const cJSON *v = cJSON_GetObjectItemCaseSensitive(o, k);
     if (cJSON_IsString(v) && v->valuestring) {
-        strncpy(dst, v->valuestring, cap - 1);
-        dst[cap - 1] = '\0';
+        if (strlen(v->valuestring) >= cap) return false;
+        strcpy(dst, v->valuestring);
     }
+    return true;
 }
 
 static esp_err_t provision_post(httpd_req_t *req)
 {
     if (s_submitted) {
         httpd_resp_set_status(req, "409 Conflict");
-        httpd_resp_sendstr(req, "{\"ok\":false,\"error\":\"already provisioning\"}");
+        httpd_resp_sendstr(req,
+            "{\"ok\":false,\"provisioning\":true,\"error\":\"already provisioning\"}");
         return ESP_OK;
     }
     int total = req->content_len;
     if (total <= 0 || total > 4096) {
         httpd_resp_set_status(req, "400 Bad Request");
-        httpd_resp_sendstr(req, "{\"ok\":false}");
+        httpd_resp_sendstr(req, "{\"ok\":false,\"error\":\"request too large\"}");
         return ESP_OK;
     }
     char *buf = malloc(total + 1);
@@ -317,15 +324,36 @@ static esp_err_t provision_post(httpd_req_t *req)
     free(buf);
     if (!o) {
         httpd_resp_set_status(req, "400 Bad Request");
-        httpd_resp_sendstr(req, "{\"ok\":false}");
+        httpd_resp_sendstr(req, "{\"ok\":false,\"error\":\"malformed request\"}");
         return ESP_OK;
     }
+    const struct { const char *key; char *dst; size_t cap; } fields[] = {
+        { "ssid",        s_submit.ssid,        sizeof(s_submit.ssid)        },
+        { "password",    s_submit.password,    sizeof(s_submit.password)    },
+        { "credential",  s_submit.credential,  sizeof(s_submit.credential)  },
+        { "device_name", s_submit.device_name, sizeof(s_submit.device_name) },
+    };
     memset(&s_submit, 0, sizeof(s_submit));
-    json_copy_str(o, "ssid",        s_submit.ssid,       sizeof(s_submit.ssid));
-    json_copy_str(o, "password",    s_submit.password,   sizeof(s_submit.password));
-    json_copy_str(o, "credential",  s_submit.credential, sizeof(s_submit.credential));
-    json_copy_str(o, "device_name", s_submit.device_name,sizeof(s_submit.device_name));
+    const char *over = NULL;
+    size_t over_max = 0;
+    for (size_t i = 0; i < sizeof(fields) / sizeof(fields[0]); i++) {
+        if (!json_copy_str(o, fields[i].key, fields[i].dst, fields[i].cap)) {
+            over = fields[i].key;
+            over_max = fields[i].cap - 1;
+            break;
+        }
+    }
     cJSON_Delete(o);
+
+    if (over) {
+        char msg[96];
+        snprintf(msg, sizeof(msg),
+                 "{\"ok\":false,\"error\":\"%s too long (max %u characters)\"}",
+                 over, (unsigned)over_max);
+        httpd_resp_set_status(req, "400 Bad Request");
+        httpd_resp_sendstr(req, msg);
+        return ESP_OK;
+    }
 
     if (!s_submit.ssid[0]) {
         httpd_resp_set_status(req, "400 Bad Request");
@@ -341,7 +369,7 @@ static esp_err_t provision_post(httpd_req_t *req)
     if (xTaskCreate(provision_task, "akt_prov", 8192, NULL, 5, NULL) != pdPASS) {
         s_submitted = false;
         httpd_resp_set_status(req, "500 Internal Server Error");
-        httpd_resp_sendstr(req, "{\"ok\":false}");
+        httpd_resp_sendstr(req, "{\"ok\":false,\"error\":\"could not start provisioning\"}");
         return ESP_OK;
     }
     httpd_resp_set_status(req, "202 Accepted");
