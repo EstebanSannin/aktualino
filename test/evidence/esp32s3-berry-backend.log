@@ -1,0 +1,22 @@
+# Torizon Cloud backend confirmation — S3 Berry secondary flagship
+# Device: aktualino-s3-f43636a4  UUID: 90ff467f-0110-467b-ab00-bb1dc7f88289  (primary hwid aktualino-esp32, secondary hwid aktualino-lua)
+# Captured: 2026-09-02T10:19:31Z
+
+## publish + assign (aktualino-bundle.py deploy blink.be v1.4.0)
+publish aktualino-lua-1.4.0 -> HTTP 204 (BINARY target, hwid aktualino-lua, sha256=3a0058f6f8666597a8683e460a161667455b6f27f7709482f761d55298af421d, 603 B)
+assign aktualino-lua-1.4.0 -> HTTP 201  {"affected":[{"deviceUuid":"90ff467f-0110-467b-ab00-bb1dc7f88289","deviceId":"aktualino-s3-f43636a4-90ff46","name":"aktualino-s3-f43636a4"}],"notAffected":[]}
+
+## GET /api/v2beta/updates/devices/90ff467f-0110-467b-ab00-bb1dc7f88289  (package aktualino-lua-1.4.0)
+{
+ "updateId": "01a0619f-049f-7553-97a1-5d3654503146",
+ "status": "Succeeded",
+ "completedAt": "2026-09-02T10:17:25Z",
+ "deviceResult": {
+  "resultCode": "OK",
+  "success": true,
+  "description": "Device has been successfully installed"
+ },
+ "packages": {
+  "aktualino-lua": "aktualino-lua-1.4.0"
+ }
+}

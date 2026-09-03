@@ -105,3 +105,29 @@ installed image `aktualino-esp32-0.2.0`; update **status Completed, deviceResult
 {resultCode: OK, success: true}**. Evidence:
 `test/evidence/torizon-update-complete.log` (on-device serial) +
 `test/evidence/torizon-update-backend.log` (API request/response).
+
+## Validated on ESP32-S3 silicon (not just the classic ESP32)
+
+The flow above was first proven on the classic ESP32. It is now also
+hardware-proven on a real **ESP32-S3** (QFN56, rev v0.2, 8 MB PSRAM, 8 MB flash),
+including the optional **Berry script secondary** — the S3-first feature — end to
+end over real Torizon Cloud:
+
+- **First-silicon bring-up** — feature-on image (`CONFIG_AKTUALINO_SCRIPT_SECONDARY=y`)
+  boots on the S3: 8 MB octal PSRAM initialized, `berry v1.1.0 up`, running on
+  `ota_0` (VALID), `scripts` partition mounted. `test/evidence/esp32s3-bringup.log`.
+- **Provisioned to Torizon Cloud** — a fresh device (UUID `90ff467f-…`) self-
+  registers **both** ECUs (primary `aktualino-esp32`, secondary `aktualino-lua`);
+  first V3 manifest ACCEPTED. `test/evidence/esp32s3-torizon-register.log`.
+- **Berry bundle delivered OTA** — `aktualino-lua-1.4.0` (blink) published + assigned
+  to the secondary; the S3 does `CROSS-REPO MATCH PASS` → 302 → S3 GET →
+  install to the `scripts` partition → the Berry VM runs `setup()`/`loop()` and
+  reports. `test/evidence/esp32s3-berry-install.log`.
+- **Torizon Cloud records it Completed** — update `01a0619f-…` **status Succeeded,
+  deviceResult {resultCode: OK, success: true}**.
+  `test/evidence/esp32s3-berry-backend.log`.
+
+Note: the firmware currently reports the primary hardware id as `aktualino-esp32`
+on both chips (it is not chip-derived); a distinct `aktualino-esp32s3` primary id
+is a small, tracked follow-up. It does not affect the Berry secondary (hwid
+`aktualino-lua`).

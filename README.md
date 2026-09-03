@@ -73,6 +73,10 @@ suite (7 suites) exercises canonical JSON, Ed25519 and RSA-PSS verification, the
 meta-hash chain, and the cross-repo refuse paths. Serial + backend captures live
 under `test/evidence/`.
 
+The **ESP32-S3** is hardware-proven too: first-silicon bring-up (8 MB PSRAM) plus
+the optional Berry script secondary delivered over Torizon Cloud and recorded
+**Completed** — see `docs/torizon-cloud-validation.md` and `test/evidence/esp32s3-*.log`.
+
 The full two-repo client fits with roughly **15% free** in the app slot on a
 classic ESP32 (4 MB) and **~59% free** on the ESP32-S3.
 
