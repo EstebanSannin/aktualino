@@ -98,7 +98,7 @@ jobs:
         run: |
           VER="${GITHUB_REF_NAME#v}"
           mkdir -p site
-          cp dist/*.bin site/
+          cp dist/*.bin dist/SHA256SUMS site/
           sed "s/{{VERSION}}/$VER/g" web/manifest-plain.json.tmpl > site/manifest-plain.json
           sed "s/{{VERSION}}/$VER/g" web/manifest-berry.json.tmpl > site/manifest-berry.json
           sed "s/{{VERSION}}/$VER/g" web/index.html > site/index.html
