@@ -42,7 +42,7 @@ typedef enum {
 typedef struct {
     char ssid[33];          /* target Wi-Fi SSID (<=32)                     */
     char password[65];      /* Wi-Fi password ("" for an open network)      */
-    char credential[768];   /* Path B: pasted provisioning credential ("" if none) */
+    char credential[2048];  /* Path B: pasted provisioning credential ("" if none) */
     char device_name[48];   /* optional device name ("" => MAC-derived)     */
 } aktualino_portal_submit_t;
 
