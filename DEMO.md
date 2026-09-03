@@ -65,11 +65,25 @@ ssh $AKTUALINO_BUILD_USER@$AKTUALINO_BUILD_HOST \
 Register the device and inject its identity into NVS (Approach A — the board never
 holds an account secret):
 
+`--out` is required, and the NVS **image** (`.bin`) is written by ESP-IDF's
+`nvs_partition_gen.py` — so run the tool where IDF is reachable. The simplest way,
+consistent with the Docker build host in Step 0, is to run it **inside the same
+`espressif/idf` container** (which sets `$IDF_PATH`):
+
 ```bash
-tools/aktualino-provision.py --torizon --credentials credentials.zip --hwid <hwid>
-# -> an NVS image (device.zip creds + the Torizon Director/Image RSA roots)
-# flash the resulting torizon-nvs.bin alongside the firmware.
+docker run --rm -v "$PWD":/project -w /project espressif/idf:release-v5.4 \
+  tools/aktualino-provision.py --torizon \
+    --credentials credentials.zip --hwid <hwid> --out prov-out
+# -> prov-out/torizon-nvs.bin   device.zip creds + the Torizon Director/Image RSA roots
+#    prov-out/nvs.csv, prov-out/files/   the inputs it was generated from
+# Flash torizon-nvs.bin to the `nvs` partition at offset 0x9000, alongside the firmware:
+#    esptool.py -p <port> write_flash 0x9000 prov-out/torizon-nvs.bin
 ```
+
+Run without a container and the tool auto-finds `nvs_partition_gen.py` via
+`--idf-path`/`$IDF_PATH`. If neither is set it still writes `prov-out/nvs.csv` +
+`prov-out/files/` and prints the exact `nvs_partition_gen.py generate …` command
+to finish the `.bin` yourself.
 
 Or use the on-device **SoftAP portal** (Path B / A2) — see `docs/provisioning.md`.
 
