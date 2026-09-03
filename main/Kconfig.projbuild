@@ -30,8 +30,9 @@ menu "Aktualino"
         default "https://192.168.1.100:8443/firmware.bin"
         help
             HTTPS URL of the firmware image served by the Phase-0 dumb update
-            server (tools/dumb-update-server.py) on the build host. The server's
-            self-signed CA (main/certs/dumb_server_ca.pem) is embedded and
-            pinned. Set this to your own server's LAN address.
+            server (tools/dumb-update-server.py) on the build host — a dev
+            convenience predating Torizon Cloud. Set this to your own server's
+            LAN address. (No per-server CA is embedded; the server's TLS cert
+            must chain to the compiled-in Mozilla CA bundle.)
 
 endmenu

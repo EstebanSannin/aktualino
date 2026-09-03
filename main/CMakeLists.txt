@@ -33,10 +33,6 @@ idf_component_register(
         aktualino_berry
         aktualino_script
     EMBED_TXTFILES
-        # Pinned self-signed CA for the dumb update server. Generated
-        # (CN/SAN = reachable server IP) into main/certs/; gitignored, rsynced
-        # to the build host. Symbol: _binary_dumb_server_ca_pem_start.
-        "certs/dumb_server_ca.pem"
         # Phase 2: the Director root.json TRUST ANCHOR (public Uptane metadata,
         # TOFU-free — the device verifies fetched roots against this and walks the
         # rotation chain forward). Committed (not a secret). Symbols:
