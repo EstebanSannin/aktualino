@@ -98,6 +98,10 @@ export AKTUALINO_SERIAL_PORT=/dev/ttyUSB0    # for flash/monitor
 tools/sync-build.sh build            # both targets (esp32, esp32s3)
 tools/sync-build.sh build esp32      # one target
 tools/sync-build.sh monitor esp32    # flash + serial monitor (board attached)
+
+# size-trimmed "lite" profile (sdkconfig.lite): -Os + trimmed CA bundle +
+# no debug-log strings — ~17% smaller on the classic ESP32, no capability lost:
+AKTUALINO_PROFILE=lite tools/sync-build.sh build esp32
 ```
 
 You can also build directly with ESP-IDF if you have it installed:

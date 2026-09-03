@@ -19,10 +19,15 @@
 #   AKTUALINO_REMOTE_DIR   project dir on the build host (default: aktualino)
 #   AKTUALINO_IDF_IMAGE    ESP-IDF Docker image (default: espressif/idf:release-v5.4)
 #   AKTUALINO_SERIAL_PORT  serial device for flash/monitor (default: /dev/ttyUSB0)
+#   AKTUALINO_PROFILE      build profile: unset = full (default), "lite" = the
+#                          size-trimmed profile (sdkconfig.lite). The lite build
+#                          goes into build-<target>-lite/ with an isolated
+#                          sdkconfig, so it never clobbers the full build.
 #
 # Usage:
 #   tools/sync-build.sh build            # both targets (default)
 #   tools/sync-build.sh build esp32      # one target
+#   AKTUALINO_PROFILE=lite tools/sync-build.sh build esp32   # size-trimmed build
 #   tools/sync-build.sh clean [target]   # fullclean
 #   tools/sync-build.sh monitor [target] # flash + serial monitor (needs the board)
 #   tools/sync-build.sh gen-creds        # only regenerate generated headers
@@ -37,6 +42,7 @@ SSH_KEY="${AKTUALINO_SSH_KEY:-}"
 REMOTE_DIR="${AKTUALINO_REMOTE_DIR:-aktualino}"
 IDF_IMAGE="${AKTUALINO_IDF_IMAGE:-espressif/idf:release-v5.4}"
 SERIAL_DEV="${AKTUALINO_SERIAL_PORT:-/dev/ttyUSB0}"
+PROFILE="${AKTUALINO_PROFILE:-}"
 DEFAULT_TARGETS=(esp32 esp32s3)
 
 REMOTE_HOST="${BUILD_USER:+$BUILD_USER@}$BUILD_HOST"
@@ -150,25 +156,53 @@ idf_run() {
         $IDF_IMAGE idf.py $*"
 }
 
+# Resolve the build dir + idf.py config args for a target under the active
+# profile. Sets globals BUILD_DIR and DEFAULTS_ARG.
+#   full (default): build-<t>/, ESP-IDF applies sdkconfig.defaults[.<t>] implicitly.
+#   lite:           build-<t>-lite/ with an ISOLATED sdkconfig (-DSDKCONFIG) and
+#                   the overlay chained on: sdkconfig.defaults;.<t>;sdkconfig.lite.
+#                   The single quotes keep the ';' list intact through the remote
+#                   shell (it runs `docker ... idf.py <args>` as one command).
+profile_args() {
+    local t="$1"
+    case "$PROFILE" in
+        "")
+            BUILD_DIR="build-$t"
+            DEFAULTS_ARG=""
+            ;;
+        lite)
+            BUILD_DIR="build-$t-lite"
+            DEFAULTS_ARG="-DSDKCONFIG=/project/$BUILD_DIR/sdkconfig -DSDKCONFIG_DEFAULTS='sdkconfig.defaults;sdkconfig.defaults.$t;sdkconfig.lite'"
+            ;;
+        *)
+            die "unknown AKTUALINO_PROFILE: '$PROFILE' (want unset or 'lite')"
+            ;;
+    esac
+}
+
 build_target() {
     local t="$1"
-    log "build target=$t (build-$t/)"
-    idf_run "" "-B build-$t set-target $t build"
+    profile_args "$t"
+    log "build target=$t profile=${PROFILE:-full} ($BUILD_DIR/)"
+    idf_run "" "-B $BUILD_DIR $DEFAULTS_ARG set-target $t build"
     log "target=$t OK"
 }
 
 clean_target() {
     local t="$1"
-    log "fullclean target=$t"
-    idf_run "" "-B build-$t fullclean" || true
+    profile_args "$t"
+    log "fullclean target=$t ($BUILD_DIR/)"
+    idf_run "" "-B $BUILD_DIR fullclean" || true
 }
 
 monitor_target() {
     local t="$1"
-    log "flash + monitor target=$t on $SERIAL_DEV (needs the board attached)"
-    # Container runs as root so it can open the serial tty.
+    profile_args "$t"
+    log "flash + monitor target=$t profile=${PROFILE:-full} on $SERIAL_DEV (needs the board attached)"
+    # Container runs as root so it can open the serial tty. Flash uses the
+    # already-configured build dir, so no config args are needed here.
     idf_run "--device=$SERIAL_DEV" \
-        "-B build-$t -p $SERIAL_DEV flash monitor"
+        "-B $BUILD_DIR -p $SERIAL_DEV flash monitor"
 }
 
 # --- dispatch ---------------------------------------------------------------

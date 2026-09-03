@@ -1,0 +1,34 @@
+# Aktualino — "lite" size profile.
+#
+# An overlay applied ON TOP of sdkconfig.defaults + sdkconfig.defaults.<target>.
+# Opt in via the build helper:
+#     AKTUALINO_PROFILE=lite tools/sync-build.sh build esp32
+# or directly with idf.py:
+#     idf.py -DSDKCONFIG_DEFAULTS="sdkconfig.defaults;sdkconfig.defaults.esp32;sdkconfig.lite" \
+#            -B build-esp32-lite set-target esp32 build
+#
+# Trims the classic-ESP32 image from ~1.27 MiB to ~1.05 MiB (measured: -223 KiB,
+# -17%, Berry off) with NO loss of capability — headroom for flash-constrained
+# targets and a bigger A/B margin. Three levers:
+#   1. -Os instead of the debug optimization level  (~129 KiB of code). Slightly
+#      slower execution; irrelevant for a poll-and-idle OTA client.
+#   2. CA certificate bundle FULL (~200 roots) -> CMN (common subset, ~40 roots),
+#      ~-52 KiB. VERIFIED that CMN still ships all four Amazon Root CAs +
+#      Starfield Services Root G2, so the Torizon presigned-S3 binary-download
+#      leg (SPEC §7.4) still validates. No custom bundle needed.
+#   3. Drop compiled-in ESP_LOGD debug strings (max log level INFO). INFO / WARN
+#      / ERROR still print, so the boot banner + decision stay observable.
+#
+# Target-agnostic: composes with the esp32 and esp32s3 overlays alike. For an
+# even smaller build, the larger but higher-risk levers are replacing libsodium
+# with a tiny Ed25519 (~-100 KiB) and a custom Amazon-only CA bundle — tracked in
+# docs/hardening-todo.md, deliberately NOT in this zero-risk config-only profile.
+
+# --- Compiler: optimize for size (base uses _DEBUG for bring-up) ------------
+CONFIG_COMPILER_OPTIMIZATION_SIZE=y
+
+# --- Logging: strip DEBUG-level strings from the image (keep INFO and up) ---
+CONFIG_LOG_MAXIMUM_LEVEL_INFO=y
+
+# --- mbedTLS CA bundle: common subset (still covers the Amazon S3 leg) -------
+CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_CMN=y
